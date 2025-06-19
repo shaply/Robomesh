@@ -9,6 +9,8 @@ else
 fi
 
 echo "Building roboserver for $SERVER_USER@$SERVER_IP..."
+rm -rf ./build
+mkdir -p ./build
 docker build -t roboserver-build .
 docker create --name temp roboserver-build
 docker cp temp:/app/roboserver ./build/roboserver
