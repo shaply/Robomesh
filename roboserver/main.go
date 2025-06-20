@@ -18,6 +18,13 @@ func main() {
 
 	var wg sync.WaitGroup
 
+	log.Println("Server is running on the following IPs:")
+	// Print local IPs
+	localIPs := shared.GetLocalIPs()
+	for _, ip := range localIPs {
+		log.Printf("%s\n", ip)
+	}
+
 	// Start HTTP server
 	wg.Add(1)
 	go func() {
@@ -31,13 +38,6 @@ func main() {
 		defer wg.Done()
 		mqtt_server.Start(ctx)
 	}()
-
-	log.Println("Server is running on the following IPs:")
-	// Print local IPs
-	localIPs := shared.GetLocalIPs()
-	for _, ip := range localIPs {
-		log.Printf("%s\n", ip)
-	}
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)

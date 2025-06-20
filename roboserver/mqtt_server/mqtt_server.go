@@ -15,7 +15,7 @@ func Start(ctx context.Context) {
 			return
 		default:
 			// Simulate polling or handling messages
-			time.Sleep(2 * time.Second)
+			time.Sleep(1 * time.Second)
 		}
 	}
 }
