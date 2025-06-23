@@ -15,4 +15,4 @@ docker build -t roboserver-build .
 docker create --name temp roboserver-build
 docker cp temp:/app/roboserver ./build/roboserver
 docker rm temp
-scp ./build/roboserver $SERVER_USER@$SERVER_IP:~
+scp ./build/roboserver $SERVER_USER@$SERVER_IP:~/roboserver_temp/

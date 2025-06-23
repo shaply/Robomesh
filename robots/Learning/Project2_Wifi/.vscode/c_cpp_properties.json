@@ -1,0 +1,110 @@
+//
+// !!! WARNING !!! AUTO-GENERATED FILE!
+// PLEASE DO NOT MODIFY IT AND USE "platformio.ini":
+// https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags
+//
+{
+    "configurations": [
+        {
+            "name": "PlatformIO",
+            "includePath": [
+                "/Users/davidgu/Desktop/Projects/Robomesh/robots/Learning/Project2_Wifi/include",
+                "/Users/davidgu/Desktop/Projects/Robomesh/robots/Learning/Project2_Wifi/src",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/cores/arduino/tinyusb",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/cores/arduino",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/cores/arduino/api/deprecated",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/cores/arduino/api/deprecated-avr-comp",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/variants/UNOWIFIR4",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/AnalogWave",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Arduino_CAN/src",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Arduino_FreeRTOS/src",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Arduino_LED_Matrix/src",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/BlockDevices",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/EEPROM/src",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/FATFilesystem",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/HID",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/I2S",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/LittleFilesystem",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/OPAMP/src",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/OTAUpdate/src",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Preferences/src",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/RTC/src",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/SDU/src",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/SPI",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/SoftwareATSE/src",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/SoftwareSerial/src",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Storage",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/WDT/src",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/WiFiS3/src",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Wire",
+                ""
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "/Users/davidgu/Desktop/Projects/Robomesh/robots/Learning/Project2_Wifi/include",
+                    "/Users/davidgu/Desktop/Projects/Robomesh/robots/Learning/Project2_Wifi/src",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/cores/arduino/tinyusb",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/cores/arduino",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/cores/arduino/api/deprecated",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/cores/arduino/api/deprecated-avr-comp",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/variants/UNOWIFIR4",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/AnalogWave",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Arduino_CAN/src",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Arduino_FreeRTOS/src",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Arduino_LED_Matrix/src",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/BlockDevices",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/EEPROM/src",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/FATFilesystem",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/HID",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/I2S",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/LittleFilesystem",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/OPAMP/src",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/OTAUpdate/src",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Preferences/src",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/RTC/src",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/SDU/src",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/SPI",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/SoftwareATSE/src",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/SoftwareSerial/src",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Storage",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/WDT/src",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/WiFiS3/src",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Wire",
+                    ""
+                ]
+            },
+            "defines": [
+                "PLATFORMIO=60118",
+                "ARDUINO_UNOWIFIR4",
+                "ARDUINO_ARCH_RENESAS_UNO",
+                "ARDUINO_UNOR4_WIFI",
+                "NO_USB",
+                "BACKTRACE_SUPPORT",
+                "LWIP_DNS=1",
+                "CFG_TUSB_MCU=OPT_MCU_RAXXX",
+                "_RA_CORE=CM4",
+                "_RENESAS_RA_",
+                "ARDUINO=10810",
+                "ARDUINO_ARCH_RENESAS",
+                "ARDUINO_FSP",
+                "_XOPEN_SOURCE=700",
+                "F_CPU=48000000L",
+                ""
+            ],
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++17",
+            "compilerPath": "/Users/davidgu/.platformio/packages/toolchain-gccarmnoneeabi/bin/arm-none-eabi-gcc",
+            "compilerArgs": [
+                "-mcpu=cortex-m4",
+                "-mfloat-abi=hard",
+                "-mfpu=fpv4-sp-d16",
+                "-mthumb",
+                "-iprefix/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno",
+                "@/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/variants/UNOWIFIR4/includes.txt",
+                ""
+            ]
+        }
+    ],
+    "version": 4
+}

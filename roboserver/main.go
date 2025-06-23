@@ -8,13 +8,24 @@ import (
 	"roboserver/http_server"
 	"roboserver/mqtt_server"
 	"roboserver/shared"
+	"roboserver/shared/robot_manager"
+	"roboserver/tcp_server"
 	"sync"
 	"syscall"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	// Get environment variables
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Printf("Error loading .env files: %v", err)
+		return
+	}
 
 	var wg sync.WaitGroup
 
@@ -25,18 +36,31 @@ func main() {
 		log.Printf("%s\n", ip)
 	}
 
+	// Initialize robot manager
+	robotManager := robot_manager.NewRobotHandler()
+	if robotManager == nil {
+		log.Fatal("Failed to initialize robot manager")
+	}
+
 	// Start HTTP server
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		http_server.Start(ctx)
+		http_server.Start(ctx, robotManager)
 	}()
 
 	// Start MQTT server
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		mqtt_server.Start(ctx)
+		mqtt_server.Start(ctx, robotManager)
+	}()
+
+	// Start TCP server
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		tcp_server.Start(ctx, robotManager)
 	}()
 
 	sigs := make(chan os.Signal, 1)

@@ -1,7 +1,10 @@
 package shared
 
 type Robot struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Status string `json:"status"`
+	ID       int    `json:"id"`
+	Name     string `json:"name"`
+	IP       string `json:"ip"`
+	Type     string `json:"type"`
+	Status   string `json:"status"`
+	DeviceID string `json:"device_id"`
 }

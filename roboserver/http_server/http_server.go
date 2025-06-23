@@ -5,44 +5,70 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"roboserver/http_server/robot"
-	"roboserver/shared"
+	"os"
+	"roboserver/shared/robot_manager"
 
 	"github.com/go-chi/chi/v5"
 )
 
-func Start(ctx context.Context) error {
+type HTTPServer struct {
+	robotHandler *robot_manager.RobotHandler
+	router       *chi.Mux
+	srv          *http.Server
+}
+
+func Start(ctx context.Context, robotHandler *robot_manager.RobotHandler) error {
 	r := chi.NewRouter()
+
+	// Get port
+	port := os.Getenv("HTTP_PORT")
+	if port == "" {
+		log.Fatal("HTTP_PORT environment variable is not set")
+	}
 	srv := &http.Server{
-		Addr:    ":8080", // Change to your desired port
+		Addr:    fmt.Sprintf(":%s", port),
 		Handler: r,
 	}
+	defer srv.Shutdown(ctx)
 
+	s := &HTTPServer{
+		robotHandler: robotHandler,
+		router:       r,
+		srv:          srv,
+	}
+
+	serverErr := make(chan error, 1)
 	go func() {
-		r.Get("/", handler) // Root handler
+		s.router.Get("/", s.GETHandleHome) // Root handler
 
 		// Register routes
-		r.Route("/robot", robot.RobotRoutes)
+		s.router.Route("/robot", s.RobotRoutes)
 
-		log.Println("Starting HTTP server on", srv.Addr)
-		srv.ListenAndServe()
+		log.Println("Starting HTTP server on", s.srv.Addr)
+		if err := s.srv.ListenAndServe(); err != nil {
+			serverErr <- fmt.Errorf("error starting HTTP server: %w", err)
+		}
 	}()
 
-	<-ctx.Done() // wait for cancellation
-	log.Println("Shutting down HTTP server...")
-	if err := srv.Shutdown(ctx); err != nil {
-		log.Println("Error shutting down HTTP server:", err)
-		return fmt.Errorf("error shutting down HTTP server: %w", err)
+	select {
+	case err := <-serverErr:
+		log.Fatal(err)
+	case <-ctx.Done():
+		log.Println("Shutting down HTTP server...")
+		if err := s.srv.Shutdown(ctx); err != nil {
+			log.Println("Error shutting down HTTP server:", err)
+			return fmt.Errorf("error shutting down HTTP server: %w", err)
+		}
 	}
 
 	return nil
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
+func (h *HTTPServer) GETHandleHome(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello from RoboHub!")
 
 	fmt.Fprintln(w, "Available robots:")
-	for id, robot := range shared.Robots {
-		fmt.Fprintf(w, "Robot ID: %d, Name: %s, Status: %s\n", id, robot.Name, robot.Status)
+	for _, robot := range h.robotHandler.GetRobots() {
+		fmt.Fprintf(w, "Robot ID: %d, Name: %s, Status: %s\n", robot.ID, robot.Name, robot.Status)
 	}
 }

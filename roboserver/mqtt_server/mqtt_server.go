@@ -3,10 +3,15 @@ package mqtt_server
 import (
 	"context"
 	"log"
+	"roboserver/shared/robot_manager"
 	"time"
 )
 
-func Start(ctx context.Context) {
+type MQTTClient struct {
+	robotHandler *robot_manager.RobotHandler
+}
+
+func Start(ctx context.Context, robotHandler *robot_manager.RobotHandler) {
 	log.Println("MQTT client started")
 	for {
 		select {
