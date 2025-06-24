@@ -39,7 +39,12 @@ func Start(ctx context.Context, robotHandler *robot_manager.RobotHandler) error 
 		for {
 			conn, err := listener.Accept()
 			if err != nil {
-				continue
+				select {
+				case <-ctx.Done():
+					return // Context cancelled, exit gracefully
+				default:
+					continue
+				}
 			}
 			log.Printf("Accepted connection from %s", conn.RemoteAddr())
 			go s.handleConnection(conn) // Handle each connection in a separate goroutine
@@ -68,7 +73,7 @@ func (s *TCPServer) handleConnection(conn net.Conn) {
 	log.Printf("Received message: %s from ip %s", message, conn.RemoteAddr().String())
 
 	// Here you can add logic to handle the message, e.g., parse it, store it, etc.
-	args := strings.Split(message, " ")
+	args := strings.Fields(message)
 	switch args[0] {
 	case "REGISTER":
 		if len(args) < 3 {

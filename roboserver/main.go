@@ -10,8 +10,10 @@ import (
 	"roboserver/shared"
 	"roboserver/shared/robot_manager"
 	"roboserver/tcp_server"
+	"roboserver/terminal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -42,6 +44,13 @@ func main() {
 		log.Fatal("Failed to initialize robot manager")
 	}
 
+	// Start terminal server (for debugging purposes)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		terminal.Start(ctx, robotManager, cancel)
+	}()
+
 	// Start HTTP server
 	wg.Add(1)
 	go func() {
@@ -66,9 +75,24 @@ func main() {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	<-sigs // wait for termination signal
-	log.Println("Received termination signal, shutting down...")
-	cancel()  // cancel the context to stop the server gracefully
-	wg.Wait() // wait for all goroutines to finish
-	log.Println("Server has shut down gracefully.")
+	select {
+	case <-ctx.Done():
+		log.Println("Context cancelled, shutting down servers...")
+	case <-sigs:
+		log.Println("Received termination signal, shutting down...")
+		cancel() // cancel the context to stop the server gracefully
+	}
+
+	done := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		log.Println("All servers have shut down gracefully.")
+	case <-time.After(20 * time.Second):
+		log.Println("Timeout waiting for servers to shut down, forcing exit.")
+	}
 }

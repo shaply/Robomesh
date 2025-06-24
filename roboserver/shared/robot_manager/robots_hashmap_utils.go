@@ -4,7 +4,7 @@ import (
 	"roboserver/shared"
 )
 
-func (h *RobotHandler) AddRobot(robot *shared.Robot) int { // Make handler to do this
+func (h *RobotHandler) AddRobot(robot *shared.BaseRobot) int { // Make handler to do this
 	if robot == nil {
 		return 0
 	} else if robot.ID != 0 {
@@ -44,14 +44,14 @@ func (h *RobotHandler) UpdateRobotStatus(id int, status string) error {
 	return nil
 }
 
-func (h *RobotHandler) GetRobot(id int) (*shared.Robot, bool) {
+func (h *RobotHandler) GetRobot(id int) (*shared.BaseRobot, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	robot, exists := h.robotsByID[id]
 	return robot, exists
 }
 
-func (h *RobotHandler) GetRobotByIP(ip string) (*shared.Robot, bool) {
+func (h *RobotHandler) GetRobotByIP(ip string) (*shared.BaseRobot, bool) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	robot, exists := h.robotsByIP[ip]

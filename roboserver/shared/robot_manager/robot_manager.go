@@ -6,16 +6,16 @@ import (
 )
 
 type RobotHandler struct {
-	robotsByID map[int]*shared.Robot
-	robotsByIP map[string]*shared.Robot
+	robotsByID map[int]*shared.BaseRobot
+	robotsByIP map[string]*shared.BaseRobot
 	idCounter  int
 	mu         sync.RWMutex
 }
 
 func NewRobotHandler() *RobotHandler {
 	return &RobotHandler{
-		robotsByID: make(map[int]*shared.Robot),
-		robotsByIP: make(map[string]*shared.Robot),
+		robotsByID: make(map[int]*shared.BaseRobot),
+		robotsByIP: make(map[string]*shared.BaseRobot),
 		idCounter:  0,
 		mu:         sync.RWMutex{},
 	}
@@ -23,7 +23,7 @@ func NewRobotHandler() *RobotHandler {
 
 func (h *RobotHandler) RegisterRobot(ip string, robot_type string, deviceID string) error {
 	// Placeholder
-	robot := NewRobot(0, "Robot", ip, robot_type, deviceID)
+	robot := shared.NewBaseRobot("Robot", robot_type, ip, deviceID)
 	if robot == nil {
 		return nil // or an error if you prefer
 	}
@@ -36,11 +36,11 @@ func (h *RobotHandler) RegisterRobot(ip string, robot_type string, deviceID stri
 	return h.UpdateRobotStatus(robot.ID, "online")
 }
 
-func (h *RobotHandler) GetRobots() []*shared.Robot {
+func (h *RobotHandler) GetRobots() []*shared.BaseRobot {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 
-	robots := make([]*shared.Robot, 0, len(h.robotsByID))
+	robots := make([]*shared.BaseRobot, 0, len(h.robotsByID))
 	for _, robot := range h.robotsByID {
 		robots = append(robots, robot)
 	}
