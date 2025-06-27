@@ -1,0 +1,1 @@
+export const PATH_GET_ROBOTS = "robot";

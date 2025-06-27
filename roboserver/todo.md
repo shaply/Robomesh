@@ -1,0 +1,2 @@
+- Need to add a functionality to periodically check if the robot is still connected to the server
+- Change REGISTER and adding a robot so that it can display good information on card
