@@ -1,2 +1,10 @@
-- Need to add a functionality to periodically check if the robot is still connected to the server
+- Move the register robot in TCP code to Robot Manager
+- Create the HTTP GET and POST for the robot communication
+- Create the proximity_sensor robot and test it (the flow)
+- Check how TCP connection works, check if communication cuts off or if Go keeps the connection up
 - Change REGISTER and adding a robot so that it can display good information on card
+- Add more terminal commands
+- Tests for various methods
+- Add firewall to TCP server to only accept connections from devices connected to the network
+- Create UDP server
+- Documentation

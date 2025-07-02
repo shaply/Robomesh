@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"roboserver/http_server"
@@ -15,6 +14,8 @@ import (
 	"syscall"
 	"time"
 
+	_ "roboserver/robots" // Import all robots to register them
+
 	"github.com/joho/godotenv"
 )
 
@@ -25,23 +26,24 @@ func main() {
 	// Get environment variables
 	err := godotenv.Load(".env")
 	if err != nil {
-		log.Printf("Error loading .env files: %v", err)
+		shared.DebugPrint("Error loading .env files: %v", err)
 		return
 	}
+	shared.InitConfig()
 
 	var wg sync.WaitGroup
 
-	log.Println("Server is running on the following IPs:")
+	shared.DebugPrint("Server is running on the following IPs:")
 	// Print local IPs
 	localIPs := shared.GetLocalIPs()
 	for _, ip := range localIPs {
-		log.Printf("%s\n", ip)
+		shared.DebugPrint("%s", ip)
 	}
 
 	// Initialize robot manager
-	robotManager := robot_manager.NewRobotHandler()
+	robotManager := robot_manager.NewRobotManager()
 	if robotManager == nil {
-		log.Fatal("Failed to initialize robot manager")
+		shared.DebugPanic("Failed to initialize robot manager")
 	}
 
 	// Start terminal server (for debugging purposes)
@@ -77,9 +79,9 @@ func main() {
 
 	select {
 	case <-ctx.Done():
-		log.Println("Context cancelled, shutting down servers...")
+		shared.DebugPrint("Context cancelled, shutting down servers...")
 	case <-sigs:
-		log.Println("Received termination signal, shutting down...")
+		shared.DebugPrint("Received termination signal, shutting down...")
 		cancel() // cancel the context to stop the server gracefully
 	}
 
@@ -91,8 +93,8 @@ func main() {
 
 	select {
 	case <-done:
-		log.Println("All servers have shut down gracefully.")
-	case <-time.After(20 * time.Second):
-		log.Println("Timeout waiting for servers to shut down, forcing exit.")
+		shared.DebugPrint("All servers have shut down gracefully.")
+	case <-time.After(60 * time.Second):
+		shared.DebugPrint("Timeout waiting for servers to shut down, forcing exit.")
 	}
 }

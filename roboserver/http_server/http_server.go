@@ -3,27 +3,27 @@ package http_server
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
+	"roboserver/shared"
 	"roboserver/shared/robot_manager"
 
 	"github.com/go-chi/chi/v5"
 )
 
 type HTTPServer struct {
-	robotHandler *robot_manager.RobotHandler
+	robotHandler *robot_manager.RobotManager
 	router       *chi.Mux
 	srv          *http.Server
 }
 
-func Start(ctx context.Context, robotHandler *robot_manager.RobotHandler) error {
+func Start(ctx context.Context, robotHandler *robot_manager.RobotManager) error {
 	r := chi.NewRouter()
 
 	// Get port
 	port := os.Getenv("HTTP_PORT")
 	if port == "" {
-		log.Fatal("HTTP_PORT environment variable is not set")
+		shared.DebugPanic("HTTP_PORT environment variable is not set")
 	}
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
@@ -44,7 +44,7 @@ func Start(ctx context.Context, robotHandler *robot_manager.RobotHandler) error 
 		// Register routes
 		s.router.Route("/robot", s.RobotRoutes)
 
-		log.Println("Starting HTTP server on", s.srv.Addr)
+		shared.DebugPrint("Starting HTTP server on %s", s.srv.Addr)
 		if err := s.srv.ListenAndServe(); err != nil {
 			serverErr <- fmt.Errorf("error starting HTTP server: %w", err)
 		}
@@ -52,11 +52,11 @@ func Start(ctx context.Context, robotHandler *robot_manager.RobotHandler) error 
 
 	select {
 	case err := <-serverErr:
-		log.Fatal(err)
+		shared.DebugPanic("%v", err)
 	case <-ctx.Done():
-		log.Println("Shutting down HTTP server...")
+		shared.DebugPrint("Shutting down HTTP server...")
 		if err := s.srv.Shutdown(ctx); err != nil {
-			log.Println("Error shutting down HTTP server:", err)
+			shared.DebugPrint("Error shutting down HTTP server:", err)
 			return fmt.Errorf("error shutting down HTTP server: %w", err)
 		}
 	}
@@ -69,6 +69,6 @@ func (h *HTTPServer) GETHandleHome(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintln(w, "Available robots:")
 	for _, robot := range h.robotHandler.GetRobots() {
-		fmt.Fprintf(w, "Robot ID: %d, Name: %s, Status: %s\n", robot.ID, robot.Name, robot.Status)
+		fmt.Fprintf(w, robot.String()+"\n")
 	}
 }

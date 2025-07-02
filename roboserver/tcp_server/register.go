@@ -1,51 +1,64 @@
 package tcp_server
 
 import (
-	"log"
 	"net"
-	"strconv"
+	"roboserver/shared"
 )
 
 func handleRegister(s *TCPServer, conn net.Conn, args []string) {
 	if len(args) < 3 {
 		conn.Write([]byte("ERROR REGISTER\n"))
-		log.Println("Invalid REGISTER command format. Expected: REGISTER <robot_type> <device_id>")
+		shared.DebugPrint("tcp_server/register.go", 10, "Invalid REGISTER command format. Expected: REGISTER <robot_type> <device_id>")
 		return
 	}
-	robotType := args[1]
-	deviceID := args[2]
-	log.Printf("Registering robot: %s with device ID: %s", robotType, deviceID)
-	if err := s.robotHandler.RegisterRobot(conn.RemoteAddr().String(), robotType, deviceID); err != nil {
-		conn.Write([]byte("ERROR REGISTER\n"))
-		log.Printf("Error registering robot: %v", err)
+	robotTypeStr := args[1]
+	robotType := shared.RobotType(robotTypeStr)
+	if robotType == "" {
+		shared.DebugPrint("tcp_server/register.go", 15, "Invalid robot type: %s", robotTypeStr)
+		conn.Write([]byte("ERROR INVALID_ROBOT_TYPE\n"))
 		return
 	}
-	log.Printf("Robot registered successfully: %s (%s)", robotType, deviceID)
-	conn.Write([]byte("OK REGISTER\n"))
-}
 
-func handleUnregister(s *TCPServer, conn net.Conn, args []string) {
-	if len(args) < 2 {
-		ip := conn.RemoteAddr().String()
-		log.Printf("Unregistering robot with IP: %s", ip)
-		if err := s.robotHandler.UnregisterRobotByIP(ip); err != nil {
-			log.Printf("Error unregistering robot: %v", err)
+	deviceID := args[2]
+	shared.DebugPrint("Registering robot: %s with device ID: %s", robotType, deviceID)
+	connFunc, ok := shared.ROBOT_FACTORY[robotType]
+	if !ok {
+		shared.DebugPrint("No connection handler for robotype: %s", robotType)
+		conn.Write([]byte("ERROR NO_ROBOTYPE_CONN_HANDLER\n"))
+		return
+	}
+
+	connHandler, err := connFunc(deviceID, conn.RemoteAddr().String())
+	if err != nil {
+		shared.DebugPrint("Error creating connection handler for robot type %s: %v", robotType, err)
+		conn.Write([]byte("ERROR CREATE_CONN_HANDLER\n"))
+		return
+	}
+	s.rm.AddRobot(deviceID, conn.RemoteAddr().String(), connHandler.GetHandler())
+	disconnect := connHandler.GetDisconnectChannel()
+	if disconnect == nil {
+		conn.Write([]byte("ERROR NO_DISCONNECT_CHANNEL\n"))
+		shared.DebugPanic("No disconnect channel for robot type %s", robotType)
+		return
+	}
+	go func() {
+		defer shared.SafeClose(disconnect)
+		if err := connHandler.Start(); err != nil {
+			shared.DebugPrint("Error starting connection handler for robot type %s: %v", robotType, err)
 			return
 		}
-		log.Printf("Robot with IP %s unregistered successfully", ip)
-		return
-	}
+	}()
+	go func() {
+		select {
+		case <-s.main_context.Done():
+			shared.SafeClose(disconnect)
+		case <-disconnect:
+		}
+		shared.DebugPrint("Connection handler for robot %s disconnected", deviceID)
+		connHandler.Stop()
+		s.rm.RemoveRobot(deviceID, conn.RemoteAddr().String())
+	}()
 
-	id := args[1]
-	log.Printf("Unregistering robot with ID: %s", id)
-	intID, err := strconv.Atoi(id)
-	if err != nil {
-		log.Printf("Invalid robot ID: %s. Error: %v", id, err)
-		return
-	}
-	if err := s.robotHandler.UnregisterRobot(intID); err != nil {
-		log.Printf("Error unregistering robot: %v", err)
-		return
-	}
-	log.Printf("Robot with ID %s unregistered successfully", id)
+	shared.DebugPrint("Robot registered successfully: %s (%s)", robotType, deviceID)
+	conn.Write([]byte("OK\n"))
 }

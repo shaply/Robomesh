@@ -2,21 +2,21 @@ package mqtt_server
 
 import (
 	"context"
-	"log"
+	"roboserver/shared"
 	"roboserver/shared/robot_manager"
 	"time"
 )
 
 type MQTTClient struct {
-	robotHandler *robot_manager.RobotHandler
+	robotHandler *robot_manager.RobotManager
 }
 
-func Start(ctx context.Context, robotHandler *robot_manager.RobotHandler) {
-	log.Println("MQTT client started")
+func Start(ctx context.Context, robotHandler *robot_manager.RobotManager) {
+	shared.DebugPrint("MQTT client started")
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("MQTT client shutting down...")
+			shared.DebugPrint("MQTT client shutting down...")
 			return
 		default:
 			// Simulate polling or handling messages

@@ -5,6 +5,35 @@ import (
 	"fmt"
 )
 
+// Constructor functions
+func NewBaseRobot(deviceID string, ip string, robotType RobotType, status string, battery byte, lastSeen int64, authToken string) *BaseRobot {
+	return &BaseRobot{
+		DeviceID:  deviceID,
+		IP:        ip,
+		RobotType: robotType,
+		Status:    status,
+		Battery:   battery,
+		LastSeen:  lastSeen,
+		AuthToken: authToken,
+	}
+}
+
+func NewBaseRobotHandler(robot Robot, msg_chan chan Msg) *BaseRobotHandler {
+	return &BaseRobotHandler{
+		Robot:   robot,
+		MsgChan: msg_chan, // Example buffer size, adjust as needed
+	}
+}
+
+func NewBaseRobotConnHandler(deviceId string, ip string, handler RobotHandler) *BaseRobotConnHandler {
+	return &BaseRobotConnHandler{
+		DeviceID:       deviceId,
+		IP:             ip,
+		Handler:        handler,
+		DisconnectChan: make(chan bool),
+	}
+}
+
 // JSON serialization methods
 func (br *BaseRobot) ToJSON() string {
 	data, err := json.Marshal(br)
@@ -14,23 +43,17 @@ func (br *BaseRobot) ToJSON() string {
 	return string(data)
 }
 
-func (br *BaseRobot) FromJSON(data string) error {
-	return json.Unmarshal([]byte(data), br)
-}
-
 // Conversion methods
-func (br *BaseRobot) ToBaseRobot() BaseRobot {
+func (br *BaseRobot) GetBaseRobot() BaseRobot {
 	return *br
 }
 
-func (br *BaseRobot) FromBaseRobot(base BaseRobot) error {
-	br.ID = base.ID
-	br.Name = base.Name
-	br.IP = base.IP
-	br.RobotType = base.RobotType
-	br.Status = base.Status
-	br.DeviceID = base.DeviceID
-	return nil
+func (br *BaseRobot) GetDeviceID() string {
+	return br.DeviceID
+}
+
+func (br *BaseRobot) GetIP() string {
+	return br.IP
 }
 
 // Status checking method
@@ -39,47 +62,45 @@ func (br *BaseRobot) IsOnline() bool {
 }
 
 func (br *BaseRobot) String() string {
-	return fmt.Sprintf("Robot(ID: %d, Name: %s, Type: %s, IP: %s, Status: %s, DeviceID: %s)",
-		br.ID, br.Name, br.RobotType, br.IP, br.Status, br.DeviceID)
+	return fmt.Sprintf("Robot(DeviceID: %s, RobotType: %s, IP: %s, Status: %s, Battery: %d%%, LastSeen: %d)",
+		br.DeviceID, br.RobotType, br.IP, br.Status, br.Battery, br.LastSeen)
 }
 
-// Message handling methods (basic implementations)
-func (br *BaseRobot) HandleMessage(message []byte) error {
-	// Basic implementation - you can override this in specific robot types
-	fmt.Printf("Robot %d received message: %s\n", br.ID, string(message))
+func (br *BaseRobotHandler) GetRobot() Robot {
+	return br.Robot
+}
+func (br *BaseRobotHandler) SendMsg(msg Msg) error {
+	if br.MsgChan == nil {
+		return ErrMsgChannelUninitialized
+	}
+	<-br.MsgChan
+	return ErrMsgUnknownType
+}
+func (br *BaseRobotHandler) GetDeviceID() string {
+	return br.Robot.GetDeviceID()
+}
+func (br *BaseRobotHandler) GetIP() string {
+	return br.Robot.GetIP()
+}
+
+func (brc *BaseRobotConnHandler) Start() error {
+	// Implement the logic to start the connection handling routine.
+	// This should be an indefinite loop that processes messages from the MsgChan
+	// and communicates with the robot.
 	return nil
 }
 
-func (br *BaseRobot) HandleCommand(command string, args ...string) error {
-	// Basic implementation - you can override this in specific robot types
-	switch command {
-	case "ping":
-		fmt.Printf("Robot %d: pong\n", br.ID)
-		return nil
-	case "status":
-		fmt.Printf("Robot %d status: %s\n", br.ID, br.Status)
-		return nil
-	case "stop":
-		br.Status = "stopped"
-		fmt.Printf("Robot %d stopped\n", br.ID)
-		return nil
-	case "start":
-		br.Status = "active"
-		fmt.Printf("Robot %d started\n", br.ID)
-		return nil
-	default:
-		return fmt.Errorf("unknown command: %s", command)
-	}
+func (brc *BaseRobotConnHandler) Stop() error {
+	// Implement the logic to stop the connection and clean up resources.
+	// This should close the DisconnectChan and any other resources used.
+	SafeClose(brc.DisconnectChan)
+	return nil
 }
 
-// Constructor function
-func NewBaseRobot(name, robotType, ip, deviceID string) *BaseRobot {
-	return &BaseRobot{
-		ID:        0, // Will be set by RobotHandler
-		Name:      name,
-		IP:        ip,
-		RobotType: robotType,
-		Status:    "offline",
-		DeviceID:  deviceID,
-	}
+func (brc *BaseRobotConnHandler) GetHandler() RobotHandler {
+	return brc.Handler
+}
+
+func (brc *BaseRobotConnHandler) GetDisconnectChannel() chan bool {
+	return brc.DisconnectChan
 }
