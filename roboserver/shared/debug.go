@@ -1,3 +1,19 @@
+// Package shared provides debugging and development utilities for the Robomesh server.
+//
+// This file contains debug functions that provide detailed location information
+// for troubleshooting and development. Debug output includes file names, line numbers,
+// function names, and call stacks to help identify issues during development.
+//
+// Debug Mode:
+// All debug functions check DEBUG_MODE before producing output.
+// Set DEBUG environment variable to "true" to enable debug logging.
+//
+// Features:
+// - Automatic caller detection using runtime.Caller()
+// - Clean function name extraction
+// - Package-aware formatting
+// - Conditional panic behavior for development vs production
+
 // shared/debug.go
 package shared
 
