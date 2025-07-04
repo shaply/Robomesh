@@ -41,7 +41,7 @@ func main() {
 	}
 
 	// Initialize robot manager
-	robotManager := robot_manager.NewRobotManager()
+	robotManager := robot_manager.NewRobotManager(ctx)
 	if robotManager == nil {
 		shared.DebugPanic("Failed to initialize robot manager")
 	}

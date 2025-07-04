@@ -14,4 +14,8 @@ var (
 	ErrRobotMismatch           = errors.New("robot mismatch between device ID and IP address")
 	ErrMsgChannelUninitialized = errors.New("message channel is not initialized")
 	ErrMsgUnknownType          = errors.New("unknown message type received")
+	ErrRobotTransfer           = errors.New("robot transfer detected, IP address already in use by another robot")
+	ErrCreateConnHandler       = errors.New("failed to create connection handler for robot")
+	ErrNoRobotTypeConnHandler  = errors.New("no connection handler for the specified robot type")
+	ErrNoDisconnectChannel     = errors.New("no disconnect channel available for the robot")
 )

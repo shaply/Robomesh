@@ -5,7 +5,7 @@ import (
 )
 
 func handleDefault(s *TCPServer, conn net.Conn, message string) {
-	robot_handler, err := s.rm.GetHandler("", conn.RemoteAddr().String())
+	robot_handler, err := s.rm.GetHandler("", conn.RemoteAddr().(*net.TCPAddr).IP.String())
 	if err != nil {
 		conn.Write([]byte("ERROR NO_ROBOT_REGISTERED_WITH_IP\n"))
 		return

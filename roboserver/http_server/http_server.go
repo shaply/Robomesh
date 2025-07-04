@@ -12,12 +12,12 @@ import (
 )
 
 type HTTPServer struct {
-	robotHandler *robot_manager.RobotManager
-	router       *chi.Mux
-	srv          *http.Server
+	rm     *robot_manager.RobotManager
+	router *chi.Mux
+	srv    *http.Server
 }
 
-func Start(ctx context.Context, robotHandler *robot_manager.RobotManager) error {
+func Start(ctx context.Context, rm *robot_manager.RobotManager) error {
 	r := chi.NewRouter()
 
 	// Get port
@@ -32,9 +32,9 @@ func Start(ctx context.Context, robotHandler *robot_manager.RobotManager) error 
 	defer srv.Shutdown(ctx)
 
 	s := &HTTPServer{
-		robotHandler: robotHandler,
-		router:       r,
-		srv:          srv,
+		rm:     rm,
+		router: r,
+		srv:    srv,
 	}
 
 	serverErr := make(chan error, 1)
@@ -68,7 +68,7 @@ func (h *HTTPServer) GETHandleHome(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello from RoboHub!")
 
 	fmt.Fprintln(w, "Available robots:")
-	for _, robot := range h.robotHandler.GetRobots() {
+	for _, robot := range h.rm.GetRobots() {
 		fmt.Fprintf(w, robot.String()+"\n")
 	}
 }

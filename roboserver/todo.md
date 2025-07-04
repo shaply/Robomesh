@@ -2,9 +2,11 @@
 - Create the HTTP GET and POST for the robot communication
 - Create the proximity_sensor robot and test it (the flow)
 - Check how TCP connection works, check if communication cuts off or if Go keeps the connection up
-- Change REGISTER and adding a robot so that it can display good information on card
+- Change REGISTER for new robots where you need to go on the website to register a new robot to connect it and it logs it to a database. This could also pave way for using a encryption password. This could also then be logged to user accounts and the device.
+  - Once authentication token is used, change the AddRobot with same deviceID and different ip scenario to use it.
 - Add more terminal commands
 - Tests for various methods
 - Add firewall to TCP server to only accept connections from devices connected to the network
 - Create UDP server
 - Documentation
+- Create validation methods for various fields

@@ -70,7 +70,7 @@ func statusCommand(ctx *CommandContext, args []string) error {
 		return fmt.Errorf("robot not found: %s", robotID)
 	}
 
-	ctx.Conn.Write([]byte(fmt.Sprintf(robot.GetRobot().String())))
+	ctx.Conn.Write([]byte(fmt.Sprintf(robot.String())))
 	return nil
 }
 

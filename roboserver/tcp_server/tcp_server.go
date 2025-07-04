@@ -67,7 +67,7 @@ func (s *TCPServer) handleConnection(conn net.Conn) {
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {
 		message := strings.TrimSpace(scanner.Text())
-		shared.DebugPrint("Received message: %s from ip %s", message, conn.RemoteAddr().String())
+		shared.DebugPrint("Received message: %s from ip %s", message, conn.RemoteAddr().(*net.TCPAddr).IP.String())
 
 		s.processMessage(conn, message)
 	}

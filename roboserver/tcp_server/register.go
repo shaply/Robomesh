@@ -20,44 +20,21 @@ func handleRegister(s *TCPServer, conn net.Conn, args []string) {
 	}
 
 	deviceID := args[2]
-	shared.DebugPrint("Registering robot: %s with device ID: %s", robotType, deviceID)
-	connFunc, ok := shared.ROBOT_FACTORY[robotType]
-	if !ok {
-		shared.DebugPrint("No connection handler for robotype: %s", robotType)
-		conn.Write([]byte("ERROR NO_ROBOTYPE_CONN_HANDLER\n"))
-		return
-	}
-
-	connHandler, err := connFunc(deviceID, conn.RemoteAddr().String())
-	if err != nil {
-		shared.DebugPrint("Error creating connection handler for robot type %s: %v", robotType, err)
-		conn.Write([]byte("ERROR CREATE_CONN_HANDLER\n"))
-		return
-	}
-	s.rm.AddRobot(deviceID, conn.RemoteAddr().String(), connHandler.GetHandler())
-	disconnect := connHandler.GetDisconnectChannel()
-	if disconnect == nil {
-		conn.Write([]byte("ERROR NO_DISCONNECT_CHANNEL\n"))
-		shared.DebugPanic("No disconnect channel for robot type %s", robotType)
-		return
-	}
-	go func() {
-		defer shared.SafeClose(disconnect)
-		if err := connHandler.Start(); err != nil {
-			shared.DebugPrint("Error starting connection handler for robot type %s: %v", robotType, err)
-			return
+	if err := s.rm.RegisterRobot(deviceID, conn.RemoteAddr().(*net.TCPAddr).IP.String(), robotType); err != nil {
+		switch err {
+		case shared.ErrNoRobotTypeConnHandler:
+			conn.Write([]byte("ERROR NO_ROBOTYPE_CONN_HANDLER\n"))
+		case shared.ErrCreateConnHandler:
+			conn.Write([]byte("ERROR CREATE_CONN_HANDLER\n"))
+		case shared.ErrRobotAlreadyExists:
+			conn.Write([]byte("ERROR ROBOT_ALREADY_EXISTS\n"))
+		case shared.ErrNoDisconnectChannel:
+			conn.Write([]byte("ERROR NO_DISCONNECT_CHANNEL\n"))
+		default:
+			conn.Write([]byte("ERROR UNKNOWN\n"))
 		}
-	}()
-	go func() {
-		select {
-		case <-s.main_context.Done():
-			shared.SafeClose(disconnect)
-		case <-disconnect:
-		}
-		shared.DebugPrint("Connection handler for robot %s disconnected", deviceID)
-		connHandler.Stop()
-		s.rm.RemoveRobot(deviceID, conn.RemoteAddr().String())
-	}()
+		return
+	}
 
 	shared.DebugPrint("Robot registered successfully: %s (%s)", robotType, deviceID)
 	conn.Write([]byte("OK\n"))

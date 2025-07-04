@@ -30,12 +30,13 @@ myRobot, ok := robot.(*MyRobot)
 ```
 */
 type Robot interface {
-	ToJSON() string          // Convert robot to JSON string
-	GetBaseRobot() BaseRobot // Get the base robot structure
-	GetDeviceID() string     // Get the unique device ID of the robot
-	GetIP() string           // Get the IP address of the robot
-	IsOnline() bool          // Check if the robot is online
-	String() string          // Get a string representation of the robot
+	ToJSON() string              // Convert robot to JSON string
+	GetBaseRobot() BaseRobot     // Get the base robot structure
+	GetDeviceID() string         // Get the unique device ID of the robot
+	GetIP() string               // Get the IP address of the robot
+	IsOnline() bool              // Check if the robot is online
+	SetLastSeen(timestamp int64) // Set the last seen timestamp of the robot
+	String() string              // Get a string representation of the robot
 }
 
 type BaseRobot struct {
@@ -49,8 +50,9 @@ type BaseRobot struct {
 }
 
 type BaseRobotHandler struct {
-	Robot   Robot    // The robot state, implements Robot interface
-	MsgChan chan Msg // Channel for receiving messages, implement message queue size yourself
+	Robot      Robot    // The robot state, implements Robot interface
+	MsgChan    chan Msg // Channel for receiving messages, implement message queue size yourself
+	disconnect chan bool
 }
 
 type RobotHandler interface {
@@ -58,6 +60,8 @@ type RobotHandler interface {
 	SendMsg(msg Msg) error // Channel for receiving messages, implement message queue size yourself
 	GetDeviceID() string
 	GetIP() string
+	GetDisconnectChannel() chan bool // Get the disconnect channel for the robot
+	QuickAction()                    // Perform a quick action on the robot, e.g. status check, battery check, etc., for the http server, this method will most likely utilize send message to the robot
 }
 
 /*
