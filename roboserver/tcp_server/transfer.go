@@ -7,8 +7,8 @@ import "net"
 When the robot is done with the transfer, it should send a message back to the TCP server to resume normal operation by writing to the reply channel.
 */
 func handleTransfer(s *TCPServer, conn net.Conn, message string) {
-	robot_handler, err := s.rm.GetHandler("", conn.RemoteAddr().(*net.TCPAddr).IP.String())
-	if err != nil {
+	robot_handler := s.validateRobot(conn.RemoteAddr().(*net.TCPAddr).IP.String())
+	if robot_handler == nil {
 		conn.Write([]byte("ERROR NO_ROBOT_REGISTERED_WITH_IP\n"))
 		return
 	}

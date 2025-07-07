@@ -5,3 +5,5 @@ To Create a robot, you must complete 3 interfaces:
 - `Robot`: Must embed `BaseRobot`
 
 `BaseRobot` has default implementations for all of these things. 
+
+For more information about all these interfaces and structs, check out `shared/types.go` and `shared/base_robot.go`

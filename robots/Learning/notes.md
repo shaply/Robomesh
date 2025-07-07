@@ -10,10 +10,11 @@
 
 ## Initial Setup
 
-### 1. Install PlatformIO
+### 1. Install PlatformIO *
 ```bash
 pip install platformio
 ```
+  - Environment is in `Robomesh/robots/.venv`
 
 ### 2. Initialize Project for Arduino Uno R4 WiFi
 ```bash
@@ -22,7 +23,8 @@ pio project init --board uno_r4_wifi
 
 ### 3. Install Required Platform
 ```bash
-pio platform install renesas-ra
+# pio package install renesas-ra
+pio package install
 ```
 
 ### 4. Configure VS Code Integration
@@ -59,11 +61,18 @@ monitor_speed = 9600
 ```
 - Figured out using `arduino-cli board list`
 
+To use external libraries, add
+```ini
+lib_deps = symlink://<path to library>/Library_Name
+```
+- Prefix with nothing if you just want to copy the library contents to the project folder
+
 ## Essential Commands
 
 ### Building and Uploading
 - `pio run` - Build the project
 - `pio run --target upload` - Build and upload to board
+- `pio run --target upload --target monitor` - To see serial output
 - `pio run --target clean` - Clean build files
 
 ### Monitoring and Debugging
@@ -107,6 +116,19 @@ void loop() {
   delay(5000);              // Wait 5 seconds
 }
 ```
+
+# Creating a library
+```
+Library_Name/
+├── library.json
+├── docs/
+├── examples/
+└── src/
+    ├── Library_Name.c
+    └── Library_Name.h
+```
+- To include, just use `#include <Library_Name.h>`
+- To get rid of red squigglies, go into a vscode project for the arduino and drag the `.vscode/` file into the workspace folder (so the `Library_Name/` or the parent of `Library_Name/`).
 
 ## Troubleshooting
 

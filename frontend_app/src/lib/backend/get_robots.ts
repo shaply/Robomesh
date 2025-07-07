@@ -15,3 +15,17 @@ export async function getRobots(): Promise<BaseRobot[] | null> {
         return null;
     }
 }
+
+export async function getRobotById(device_id: string): Promise<BaseRobot | null> {
+    try {
+        const response = await fetch(`http://${BACKEND_IP}:${BACKEND_PORT}/${PATH_GET_ROBOTS}/${device_id}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const robot = (await response.json()) as BaseRobot;
+        return robot;
+    } catch (error) {
+        console.error('Error fetching robot by ID:', error);
+        return null;
+    }
+}

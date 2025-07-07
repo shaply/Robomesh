@@ -1,0 +1,6 @@
+# How to build with Debug
+
+In the `platformio.ini`, add
+```ini
+build_flags = -DDEBUG
+```

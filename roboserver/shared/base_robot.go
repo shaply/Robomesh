@@ -93,6 +93,12 @@ func NewBaseRobotHandler(robot Robot, msg_chan chan Msg, disconnect chan bool) *
 	}
 }
 
+func NewBaseRobotHandlerWithDisconnect(robot Robot, msg_chan chan Msg) *BaseRobotHandler {
+	// Create a disconnect channel with size 1 for coordination
+	disconnectChan := make(chan bool, 1)
+	return NewBaseRobotHandler(robot, msg_chan, disconnectChan)
+}
+
 // NewBaseRobotConnHandler creates a new BaseRobotConnHandler for connection management.
 //
 // This constructor initializes a connection handler that manages the lifecycle

@@ -1,0 +1,20 @@
+{
+    "name": "RobomeshWiFi",
+    "type": "library",
+    "keywords": [
+        "wifi",
+        "network"
+    ],
+    "description": "A library for WiFi connectivity and management",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/yourusername/yourrepository.git"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Your Name",
+            "email": "youremail@example.com"
+        }
+    ]
+}

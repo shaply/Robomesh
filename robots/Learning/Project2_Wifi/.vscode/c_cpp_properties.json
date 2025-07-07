@@ -10,6 +10,7 @@
             "includePath": [
                 "/Users/davidgu/Desktop/Projects/Robomesh/robots/Learning/Project2_Wifi/include",
                 "/Users/davidgu/Desktop/Projects/Robomesh/robots/Learning/Project2_Wifi/src",
+                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/WiFiS3/src",
                 "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/cores/arduino/tinyusb",
                 "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/cores/arduino",
                 "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/cores/arduino/api/deprecated",
@@ -35,7 +36,6 @@
                 "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/SoftwareSerial/src",
                 "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Storage",
                 "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/WDT/src",
-                "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/WiFiS3/src",
                 "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Wire",
                 ""
             ],
@@ -44,6 +44,7 @@
                 "path": [
                     "/Users/davidgu/Desktop/Projects/Robomesh/robots/Learning/Project2_Wifi/include",
                     "/Users/davidgu/Desktop/Projects/Robomesh/robots/Learning/Project2_Wifi/src",
+                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/WiFiS3/src",
                     "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/cores/arduino/tinyusb",
                     "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/cores/arduino",
                     "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/cores/arduino/api/deprecated",
@@ -69,7 +70,6 @@
                     "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/SoftwareSerial/src",
                     "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Storage",
                     "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/WDT/src",
-                    "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/WiFiS3/src",
                     "/Users/davidgu/.platformio/packages/framework-arduinorenesas-uno/libraries/Wire",
                     ""
                 ]

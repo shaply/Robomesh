@@ -20,7 +20,6 @@
             }
             const data = await response.json();
             robots = data;
-            console.log('Fetched robots:', robots);
         } catch (err) {
             console.error('Error fetching robots:', err);
             error = err instanceof Error ? err.message : 'Failed to fetch robots';
@@ -76,13 +75,8 @@
         {:else if robots.length === 0}
             <div class="robot-cards-container-text">No robots found.</div>
         {:else}
-            {#each robots as robot (robot.id)}
-                <RobotCard {robot}>
-                    <span slot="actions">
-                        <PageButton variant="secondary">View Details</PageButton>
-                        <PageButton variant="danger">Delete</PageButton>
-                    </span>
-                </RobotCard>
+            {#each robots as robot (robot.device_id)}
+                <RobotCard {robot} />
             {/each}
         {/if}
     </div>
@@ -140,6 +134,7 @@
         margin: 0.5rem;
         overflow-y: auto;
         background-color: #CEDDE3;
+        align-items: start;
     }
 
     .robot-cards-container-text {

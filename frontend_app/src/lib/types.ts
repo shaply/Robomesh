@@ -1,8 +1,8 @@
 export interface BaseRobot {
-  id: number;
+  device_id: string;
   name: string;
   ip: string;
-  robotType: string;
+  robot_type: string;
   status: string;
-  deviceId: string;
+  last_seen: number;
 }

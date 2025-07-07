@@ -1,2 +1,11 @@
 ssh/
 
+.vscode/
+
+.env/
+.venv/
+venv/
+
+__pycache__/
+
+.pio/
