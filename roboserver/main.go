@@ -32,8 +32,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
+	"roboserver/database"
 	"roboserver/http_server"
 	"roboserver/mqtt_server"
 	"roboserver/shared"
@@ -98,8 +100,7 @@ func main() {
 	// Get environment variables
 	err := godotenv.Load(".env")
 	if err != nil {
-		shared.DebugPrint("Error loading .env files: %v", err)
-		return
+		panic(fmt.Sprintf("Error loading .env file: %v", err))
 	}
 	shared.InitConfig()
 
@@ -115,35 +116,64 @@ func main() {
 	// Initialize robot manager
 	robotManager := robot_manager.NewRobotManager(ctx)
 	if robotManager == nil {
-		shared.DebugPanic("Failed to initialize robot manager")
+		panic("Failed to initialize robot manager")
 	}
+
+	// Initialize database manager
+	dbManager, err := database.Start(ctx, robotManager)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to initialize databases: %v", err))
+	}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		<-ctx.Done()
+		dbManager.Stop() // Ensure databases are stopped on context cancellation
+	}()
+
+	// TODO: Pass dbManager to components that need database access
+	// For now, components can access the database manager when their signatures are updated
+	// Example: http_server.Start(ctx, robotManager, dbManager)
+	_ = dbManager // Prevent unused variable error until components are updated
 
 	// Start terminal server (for debugging purposes)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		terminal.Start(ctx, robotManager, cancel)
+		if err := terminal.Start(ctx, robotManager, cancel); err != nil {
+			shared.DebugError(err)
+			cancel()
+		}
 	}()
 
 	// Start HTTP server
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		http_server.Start(ctx, robotManager)
+		if err := http_server.Start(ctx, robotManager); err != nil {
+			shared.DebugError(err)
+			cancel()
+		}
 	}()
 
 	// Start MQTT server
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		mqtt_server.Start(ctx, robotManager)
+		if err := mqtt_server.Start(ctx, robotManager); err != nil {
+			shared.DebugError(err)
+			cancel()
+		}
 	}()
 
 	// Start TCP server
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		tcp_server.Start(ctx, robotManager)
+		if err := tcp_server.Start(ctx, robotManager); err != nil {
+			shared.DebugError(err)
+			cancel()
+		}
 	}()
 
 	sigs := make(chan os.Signal, 1)
@@ -154,8 +184,9 @@ func main() {
 		shared.DebugPrint("Context cancelled, shutting down servers...")
 	case <-sigs:
 		shared.DebugPrint("Received termination signal, shutting down...")
-		cancel() // cancel the context to stop the server gracefully
 	}
+
+	cancel() // cancel the context to stop the server gracefully
 
 	done := make(chan struct{})
 	go func() {
@@ -170,3 +201,69 @@ func main() {
 		shared.DebugPrint("Timeout waiting for servers to shut down, forcing exit.")
 	}
 }
+
+// Example of how to integrate database operations with robot management:
+//
+// Robot Registration with Database Persistence:
+//   func (rm *RobotManager) RegisterRobotWithDB(deviceID string, ip string, robotType shared.RobotType, dbManager *database.DatabaseManager) error {
+//       // Register robot in memory
+//       if err := rm.RegisterRobot(deviceID, ip, robotType); err != nil {
+//           return err
+//       }
+//
+//       // Persist to database
+//       if dbManager != nil {
+//           collection, err := dbManager.GetMongoDB().GetCollection("robots")
+//           if err != nil {
+//               return err
+//           }
+//
+//           robotDoc := bson.M{
+//               "device_id": deviceID,
+//               "ip": ip,
+//               "robot_type": robotType,
+//               "status": "online",
+//               "registered_at": time.Now(),
+//           }
+//
+//           _, err = collection.InsertOne(context.Background(), robotDoc)
+//           return err
+//       }
+//       return nil
+//   }
+//
+// Robot Status Updates:
+//   func updateRobotStatus(deviceID string, status string, dbManager *database.DatabaseManager) error {
+//       collection, err := dbManager.GetMongoDB().GetCollection("robots")
+//       if err != nil {
+//           return err
+//       }
+//
+//       filter := bson.M{"device_id": deviceID}
+//       update := bson.M{
+//           "$set": bson.M{
+//               "status": status,
+//               "last_updated": time.Now(),
+//           },
+//       }
+//
+//       _, err = collection.UpdateOne(context.Background(), filter, update)
+//       return err
+//   }
+//
+// Sensor Data Storage:
+//   func storeSensorData(deviceID string, sensorData interface{}, dbManager *database.DatabaseManager) error {
+//       collection, err := dbManager.GetMongoDB().GetCollection("sensor_data")
+//       if err != nil {
+//           return err
+//       }
+//
+//       document := bson.M{
+//           "device_id": deviceID,
+//           "timestamp": time.Now(),
+//           "data": sensorData,
+//       }
+//
+//       _, err = collection.InsertOne(context.Background(), document)
+//       return err
+//   }

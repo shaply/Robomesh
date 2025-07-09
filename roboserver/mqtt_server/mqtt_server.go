@@ -11,13 +11,13 @@ type MQTTClient struct {
 	robotHandler *robot_manager.RobotManager
 }
 
-func Start(ctx context.Context, robotHandler *robot_manager.RobotManager) {
+func Start(ctx context.Context, robotHandler *robot_manager.RobotManager) error {
 	shared.DebugPrint("MQTT client started")
 	for {
 		select {
 		case <-ctx.Done():
 			shared.DebugPrint("MQTT client shutting down...")
-			return
+			return nil
 		default:
 			// Simulate polling or handling messages
 			time.Sleep(1 * time.Second)

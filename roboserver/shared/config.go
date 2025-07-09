@@ -21,6 +21,11 @@ var (
 	DEBUG_MODE = false
 )
 
+const (
+	MONGODB_MIN_POOL_SIZE = 2
+	MONGODB_MAX_POOL_SIZE = 10
+)
+
 // InitConfig initializes server configuration from environment variables.
 //
 // This function should be called once during server startup to load

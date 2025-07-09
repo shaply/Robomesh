@@ -48,6 +48,26 @@ func DebugPrint(format string, args ...interface{}) {
 	log.Printf("[%s:%d %s]: "+format+"\n", append([]interface{}{filename, line, funcName}, args...)...)
 }
 
+// DebugError prints an error message with file/line info
+func DebugError(err error) {
+	if !DEBUG_MODE {
+		log.Printf("ERROR: %v\n", err)
+		return
+	}
+
+	// Use runtime.Caller(1) to get the caller of DebugError
+	pc, file, line, ok := runtime.Caller(1)
+	if !ok {
+		log.Printf("ERROR: %v\n", err)
+		return
+	}
+
+	filename := filepath.Base(file)
+	funcName := getShortFuncName(runtime.FuncForPC(pc).Name())
+
+	log.Printf("ERROR [%s:%d %s]: %v\n", filename, line, funcName, err)
+}
+
 // DebugPrintWithPackage shows package/file:line format
 func DebugPrintWithPackage(format string, args ...interface{}) {
 	if !DEBUG_MODE {

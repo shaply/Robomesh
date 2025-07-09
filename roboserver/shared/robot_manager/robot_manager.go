@@ -468,6 +468,8 @@ func (rm *RobotManager) RegisterRobot(deviceID string, ip string, robotType shar
 		return shared.ErrNoRobotTypeConnHandler
 	}
 
+	// TODO: Access http websocket and wait for connection
+
 	connHandler, err := connFunc(deviceID, ip)
 	if err != nil {
 		return shared.ErrCreateConnHandler

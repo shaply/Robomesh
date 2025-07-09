@@ -6,12 +6,14 @@ import (
 	"roboserver/shared"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/websocket"
 )
 
 func (h *HTTPServer) RobotRoutes(r chi.Router) {
 	r.Get("/", h.getRobots)
-	r.Get("/{robotID}", h.getRobotHandler)                 // Handler to get a specific robot by ID
-	r.Get("/{robotID}/quick_action", h.quickActionHandler) // Handler for quick actions on a robot
+	r.Get("/ws", h.wsHandler)
+	r.Get("/robot/{robotID}", h.getRobotHandler)                 // Handler to get a specific robot by ID
+	r.Get("/robot/{robotID}/quick_action", h.quickActionHandler) // Handler for quick actions on a robot
 }
 
 func (h *HTTPServer) getRobots(w http.ResponseWriter, r *http.Request) {
@@ -68,4 +70,21 @@ func (h *HTTPServer) validateRobotID(robotID string) shared.Robot {
 	} else {
 		return robot
 	}
+}
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true // Allow all origins for WebSocket connections, TODO: Implement proper origin checks
+	},
+}
+
+// TODO: Implement WebSocket handling logic
+func (h *HTTPServer) wsHandler(w http.ResponseWriter, r *http.Request) {
+	_, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		shared.DebugPrint("Failed to upgrade connection:", err)
+		http.Error(w, "Failed to upgrade connection", http.StatusInternalServerError)
+		return
+	}
+
 }
