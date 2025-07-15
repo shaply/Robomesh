@@ -8,14 +8,13 @@ package database
 import (
 	"context"
 	"roboserver/shared"
-	"roboserver/shared/robot_manager"
 )
 
 // DBManager coordinates all database connections and provides access to database services.
 //
 // This manager maintains references to all database handlers and provides a
 // unified interface for database operations across the application.
-type DBManager struct {
+type DBManager_t struct {
 	MongoDB *MongodbHandler
 	ctx     context.Context
 	cancel  context.CancelFunc
@@ -42,10 +41,10 @@ type DBManager struct {
 //	    log.Fatal("Database initialization failed:", err)
 //	}
 //	defer dbManager.Stop()
-func Start(ctx context.Context, rm *robot_manager.RobotManager) (*DBManager, error) {
+func Start(ctx context.Context) (DBManager, error) {
 	// Create database manager
 	dbCtx, cancel := context.WithCancel(ctx)
-	manager := &DBManager{
+	manager := &DBManager_t{
 		ctx:    dbCtx,
 		cancel: cancel,
 	}
@@ -73,7 +72,7 @@ func Start(ctx context.Context, rm *robot_manager.RobotManager) (*DBManager, err
 //
 // This method should be called during server shutdown to ensure all database
 // connections are properly closed and resources are released.
-func (dm *DBManager) Stop() {
+func (dm *DBManager_t) Stop() {
 	if dm.cancel != nil {
 		dm.cancel()
 	}
@@ -94,7 +93,7 @@ func (dm *DBManager) Stop() {
 //
 // Returns:
 //   - *MongodbHandler: MongoDB handler instance (nil if not initialized)
-func (dm *DBManager) GetMongoDB() *MongodbHandler {
+func (dm *DBManager_t) GetMongoDB() *MongodbHandler {
 	return dm.MongoDB
 }
 
@@ -105,7 +104,7 @@ func (dm *DBManager) GetMongoDB() *MongodbHandler {
 //
 // Returns:
 //   - bool: true if all databases are healthy, false otherwise
-func (dm *DBManager) IsHealthy() bool {
+func (dm *DBManager_t) IsHealthy() bool {
 	if dm.MongoDB == nil || !dm.MongoDB.IsHealthy() {
 		return false
 	}

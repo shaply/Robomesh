@@ -5,7 +5,10 @@
 // development features throughout the application.
 package shared
 
-import "os"
+import (
+	"os"
+	"time"
+)
 
 // DEBUG_MODE controls debug logging and development features throughout the server.
 //
@@ -24,6 +27,8 @@ var (
 const (
 	MONGODB_MIN_POOL_SIZE = 2
 	MONGODB_MAX_POOL_SIZE = 10
+
+	REGISTERING_WAIT_TIMEOUT = 30 * time.Minute
 )
 
 // InitConfig initializes server configuration from environment variables.

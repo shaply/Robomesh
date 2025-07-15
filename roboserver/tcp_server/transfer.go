@@ -6,7 +6,7 @@ import "net"
 `TRANSFER`: Stalls the TCP connection handler (so the TCP server stops reading), and gives the reading and writing functionality solely to the robot handling go routine.
 When the robot is done with the transfer, it should send a message back to the TCP server to resume normal operation by writing to the reply channel.
 */
-func handleTransfer(s *TCPServer, conn net.Conn, message string) {
+func handleTransfer(s *TCPServer_t, conn net.Conn, message string) {
 	robot_handler := s.validateRobot(conn.RemoteAddr().(*net.TCPAddr).IP.String())
 	if robot_handler == nil {
 		conn.Write([]byte("ERROR NO_ROBOT_REGISTERED_WITH_IP\n"))

@@ -5,7 +5,7 @@ import (
 	"roboserver/shared"
 )
 
-func handleRegister(s *TCPServer, conn net.Conn, args []string) {
+func handleRegister(s *TCPServer_t, conn net.Conn, args []string) {
 	if len(args) < 3 {
 		conn.Write([]byte("ERROR REGISTER\n"))
 		shared.DebugPrint("tcp_server/register.go", 10, "Invalid REGISTER command format. Expected: REGISTER <robot_type> <device_id>")
@@ -20,10 +20,10 @@ func handleRegister(s *TCPServer, conn net.Conn, args []string) {
 	}
 
 	deviceID := args[2]
-	if err := s.rm.RegisterRobot(deviceID, conn.RemoteAddr().(*net.TCPAddr).IP.String(), robotType); err != nil {
+	if err := s.rm.RegisterRobot(deviceID, conn.RemoteAddr().(*net.TCPAddr).IP.String(), robotType, conn); err != nil {
 		switch err {
 		case shared.ErrNoRobotTypeConnHandler:
-			conn.Write([]byte("ERROR NO_ROBOTYPE_CONN_HANDLER\n"))
+			conn.Write([]byte("ERROR NO_ROBOT_TYPE_CONN_HANDLER\n"))
 		case shared.ErrCreateConnHandler:
 			conn.Write([]byte("ERROR CREATE_CONN_HANDLER\n"))
 		case shared.ErrRobotAlreadyExists:

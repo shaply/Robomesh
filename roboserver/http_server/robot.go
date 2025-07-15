@@ -9,14 +9,14 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func (h *HTTPServer) RobotRoutes(r chi.Router) {
+func (h *HTTPServer_t) RobotRoutes(r chi.Router) {
 	r.Get("/", h.getRobots)
 	r.Get("/ws", h.wsHandler)
 	r.Get("/robot/{robotID}", h.getRobotHandler)                 // Handler to get a specific robot by ID
 	r.Get("/robot/{robotID}/quick_action", h.quickActionHandler) // Handler for quick actions on a robot
 }
 
-func (h *HTTPServer) getRobots(w http.ResponseWriter, r *http.Request) {
+func (h *HTTPServer_t) getRobots(w http.ResponseWriter, r *http.Request) {
 	// Handler logic for retrieving robots
 	// This would typically involve querying the robot manager
 	// and returning a list of registered robots.
@@ -33,7 +33,7 @@ func (h *HTTPServer) getRobots(w http.ResponseWriter, r *http.Request) {
 	sendJSONResponse(w, response, http.StatusOK)
 }
 
-func (h *HTTPServer) getRobotHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HTTPServer_t) getRobotHandler(w http.ResponseWriter, r *http.Request) {
 
 	robot := h.validateRobotID(chi.URLParam(r, "robotID"))
 	if robot == nil {
@@ -45,7 +45,7 @@ func (h *HTTPServer) getRobotHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // quickActionHandler handles quick actions for a specific robot.
-func (h *HTTPServer) quickActionHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HTTPServer_t) quickActionHandler(w http.ResponseWriter, r *http.Request) {
 	if h.validateRobotID((chi.URLParam(r, "robotID"))) == nil {
 		http.Error(w, "Robot not found", http.StatusNotFound)
 		return
@@ -64,7 +64,7 @@ func (h *HTTPServer) quickActionHandler(w http.ResponseWriter, r *http.Request) 
 	sendJSONResponse(w, respBytes, http.StatusOK)
 }
 
-func (h *HTTPServer) validateRobotID(robotID string) shared.Robot {
+func (h *HTTPServer_t) validateRobotID(robotID string) shared.Robot {
 	if robot, err := h.rm.GetRobot(robotID, ""); err != nil {
 		return nil
 	} else {
@@ -79,7 +79,7 @@ var upgrader = websocket.Upgrader{
 }
 
 // TODO: Implement WebSocket handling logic
-func (h *HTTPServer) wsHandler(w http.ResponseWriter, r *http.Request) {
+func (h *HTTPServer_t) wsHandler(w http.ResponseWriter, r *http.Request) {
 	_, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		shared.DebugPrint("Failed to upgrade connection:", err)

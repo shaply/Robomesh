@@ -50,19 +50,6 @@ String RobomeshWiFi::getIPAddress() {
     return "";
 }
 
-String RobomeshWiFi::getMACAddress() {
-    uint8_t mac[6];
-    WiFi.macAddress(mac);
-    String macStr = "";
-    for (int i = 0; i < 6; i++) {
-        if (mac[i] < 16) macStr += "0";
-        macStr += String(mac[i], HEX);
-        if (i < 5) macStr += ":";
-    }
-    macStr.toUpperCase();
-    return macStr;
-}
-
 int RobomeshWiFi::getRSSI() {
     if (isConnected()) {
         return WiFi.RSSI();
@@ -70,24 +57,56 @@ int RobomeshWiFi::getRSSI() {
     return 0;
 }
 
-void RobomeshWiFi::sendData(const String& data) {
-    if (isConnected()) {
-        // Implementation depends on your specific protocol/server
-        DEBUG_PRINT("Sending data: ");
-        DEBUG_PRINTLN(data);
-        // Add your actual sending logic here
-    } else {
-        DEBUG_PRINTLN("Cannot send data: not connected to WiFi");
-    }
+void RobomeshWiFi::setAuthorizationKey(const char* key) {
+    strncpy(authorizationKey, key, sizeof(authorizationKey) - 1);
+    authorizationKey[sizeof(authorizationKey) - 1] = '\0'; // Ensure null termination
 }
 
-String RobomeshWiFi::receiveData() {
-    if (isConnected()) {
-        // Implementation depends on your specific protocol/server
-        // Add your actual receiving logic here
-        return "Example received data";
-    } else {
-        DEBUG_PRINTLN("Cannot receive data: not connected to WiFi");
-        return "";
+bool RobomeshWiFi::tcpSend(const uint8_t* data, size_t length) {
+    if (!isConnected() || !client.connected()) {
+        DEBUG_PRINTLN("Cannot send data: not connected to WiFi or TCP");
+        return false;
     }
+    
+    size_t bytesSent = client.write(data, length);
+    DEBUG_PRINT("Sent ");
+    DEBUG_PRINT_DEC(bytesSent);
+    DEBUG_PRINT(" of ");
+    DEBUG_PRINT_DEC(length);
+    DEBUG_PRINTLN(" bytes");
+    
+    return bytesSent == length;  // Return true only if all bytes were sent
+}
+
+bool RobomeshWiFi::tcpSend(const String& data) {
+    if (!isConnected() || !client.connected()) {
+        DEBUG_PRINTLN("Cannot send data: not connected to WiFi or TCP");
+        return false;
+    }
+    
+    size_t bytesSent = client.print(data);
+    DEBUG_PRINT("Sent ");
+    DEBUG_PRINT_DEC(bytesSent);
+    DEBUG_PRINT(" of ");
+    DEBUG_PRINT_DEC(data.length());
+    DEBUG_PRINTLN(" bytes");
+
+    return bytesSent == data.length();
+}
+
+size_t RobomeshWiFi::tcpReceive(uint8_t* buffer, size_t maxLength) {
+    if (!isConnected() || !client.connected()) {
+        DEBUG_PRINTLN("Cannot receive data: not connected to WiFi or TCP");
+        return 0;
+    }
+    
+    size_t bytesReceived = 0;
+    if (client.available()) {
+        bytesReceived = client.readBytes(buffer, maxLength);
+        DEBUG_PRINT("Received ");
+        DEBUG_PRINT_DEC(bytesReceived);
+        DEBUG_PRINTLN(" bytes");
+    }
+    
+    return bytesReceived;
 }

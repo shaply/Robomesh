@@ -18,7 +18,7 @@ export async function getRobots(): Promise<BaseRobot[] | null> {
 
 export async function getRobotById(device_id: string): Promise<BaseRobot | null> {
     try {
-        const response = await fetch(`http://${BACKEND_IP}:${BACKEND_PORT}/${PATH_GET_ROBOTS}/${device_id}`);
+        const response = await fetch(`http://${BACKEND_IP}:${BACKEND_PORT}/${PATH_GET_ROBOTS}/robot/${device_id}`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }

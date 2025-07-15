@@ -31,6 +31,9 @@ var ErrRobotMismatch = errors.New("robot mismatch between device ID and IP addre
 // The system detected the same device ID connecting from a different IP.
 var ErrRobotTransfer = errors.New("robot transfer detected, IP address already in use by another robot")
 
+// ErrRobotNotAccepted indicates a robot registration was not accepted by the server.
+var ErrRobotNotAccepted = errors.New("robot registration not accepted")
+
 // Robot Type and Handler Errors
 //
 // These errors relate to robot type registration and handler creation.

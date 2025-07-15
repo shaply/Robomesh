@@ -7,12 +7,13 @@ import (
 	"net"
 	"os"
 	"roboserver/shared"
+	"roboserver/shared/event_bus"
 	"roboserver/shared/robot_manager"
 	"strings"
 )
 
 /* For debugging and testing purposes, this terminal server allows direct interaction with robots via TCP connections. */
-func Start(ctx context.Context, robotHandler *robot_manager.RobotManager, cancel context.CancelFunc) error {
+func Start(ctx context.Context, robotHandler robot_manager.RobotManager, cancel context.CancelFunc, eventBus event_bus.EventBus) error {
 	port := os.Getenv("TERMINAL_PORT")
 	if port == "" {
 		shared.DebugPrint("TERMINAL_PORT environment variable is not set, using default port 9001")
@@ -40,7 +41,7 @@ func Start(ctx context.Context, robotHandler *robot_manager.RobotManager, cancel
 				}
 			}
 			shared.DebugPrint("Accepted terminal connection from %s", conn.RemoteAddr())
-			go handleConnection(ctx, conn, robotHandler, cancel) // Handle each connection in a separate goroutine
+			go handleConnection(ctx, conn, robotHandler, cancel, eventBus) // Handle each connection in a separate goroutine
 		}
 	}()
 
@@ -54,7 +55,7 @@ func Start(ctx context.Context, robotHandler *robot_manager.RobotManager, cancel
 }
 
 // handleConnection handles an individual TCP connection for the terminal server using the command registry.
-func handleConnection(ctx context.Context, conn net.Conn, robotHandler *robot_manager.RobotManager, cancel context.CancelFunc) {
+func handleConnection(ctx context.Context, conn net.Conn, robotHandler robot_manager.RobotManager, cancel context.CancelFunc, eventBus event_bus.EventBus) {
 	defer conn.Close()
 	shared.DebugPrint("Handling terminal connection from %s", conn.RemoteAddr())
 
@@ -62,6 +63,7 @@ func handleConnection(ctx context.Context, conn net.Conn, robotHandler *robot_ma
 	cmdCtx := &CommandContext{
 		Conn:         conn,
 		RobotManager: robotHandler,
+		EventBus:     eventBus,
 		Cancel:       cancel,
 	}
 

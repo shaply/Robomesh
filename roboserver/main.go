@@ -39,6 +39,7 @@ import (
 	"roboserver/http_server"
 	"roboserver/mqtt_server"
 	"roboserver/shared"
+	"roboserver/shared/event_bus"
 	"roboserver/shared/robot_manager"
 	"roboserver/tcp_server"
 	"roboserver/terminal"
@@ -113,14 +114,14 @@ func main() {
 		shared.DebugPrint("%s", ip)
 	}
 
-	// Initialize robot manager
-	robotManager := robot_manager.NewRobotManager(ctx)
-	if robotManager == nil {
-		panic("Failed to initialize robot manager")
+	// Initialize event bus
+	eventBus := event_bus.NewEventBus()
+	if eventBus == nil {
+		panic("Failed to initialize event bus")
 	}
 
 	// Initialize database manager
-	dbManager, err := database.Start(ctx, robotManager)
+	dbManager, err := database.Start(ctx)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to initialize databases: %v", err))
 	}
@@ -131,6 +132,12 @@ func main() {
 		dbManager.Stop() // Ensure databases are stopped on context cancellation
 	}()
 
+	// Initialize robot manager
+	robotManager := robot_manager.NewRobotManager(ctx, dbManager, eventBus)
+	if robotManager == nil {
+		panic("Failed to initialize robot manager")
+	}
+
 	// TODO: Pass dbManager to components that need database access
 	// For now, components can access the database manager when their signatures are updated
 	// Example: http_server.Start(ctx, robotManager, dbManager)
@@ -140,7 +147,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := terminal.Start(ctx, robotManager, cancel); err != nil {
+		if err := terminal.Start(ctx, robotManager, cancel, eventBus); err != nil {
 			shared.DebugError(err)
 			cancel()
 		}
@@ -150,7 +157,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := http_server.Start(ctx, robotManager); err != nil {
+		if err := http_server.Start(ctx, robotManager, eventBus); err != nil {
 			shared.DebugError(err)
 			cancel()
 		}
@@ -170,7 +177,7 @@ func main() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := tcp_server.Start(ctx, robotManager); err != nil {
+		if err := tcp_server.Start(ctx, robotManager, eventBus); err != nil {
 			shared.DebugError(err)
 			cancel()
 		}

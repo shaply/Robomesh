@@ -7,17 +7,19 @@ import (
 	"net"
 	"os"
 	"roboserver/shared"
+	"roboserver/shared/event_bus"
 	"roboserver/shared/robot_manager"
 	"strings"
 )
 
-type TCPServer struct {
-	rm           *robot_manager.RobotManager
+type TCPServer_t struct {
+	rm           robot_manager.RobotManager
+	eb           event_bus.EventBus // Event bus for handling events
 	listener     net.Listener
 	main_context context.Context // The main context to listen for cancellation
 }
 
-func Start(ctx context.Context, robotHandler *robot_manager.RobotManager) error {
+func Start(ctx context.Context, robotHandler robot_manager.RobotManager, eventBus event_bus.EventBus) error {
 	port := os.Getenv("TCP_PORT")
 	if port == "" {
 		shared.DebugPanic("TCP_PORT environment variable is not set")
@@ -29,8 +31,9 @@ func Start(ctx context.Context, robotHandler *robot_manager.RobotManager) error 
 	}
 	defer listener.Close()
 
-	s := &TCPServer{
+	s := &TCPServer_t{
 		rm:           robotHandler,
+		eb:           eventBus,
 		listener:     listener,
 		main_context: ctx,
 	}
@@ -61,7 +64,7 @@ func Start(ctx context.Context, robotHandler *robot_manager.RobotManager) error 
 	return nil
 }
 
-func (s *TCPServer) handleConnection(conn net.Conn) {
+func (s *TCPServer_t) handleConnection(conn net.Conn) {
 	defer conn.Close()
 
 	scanner := bufio.NewScanner(conn)
@@ -77,7 +80,7 @@ func (s *TCPServer) handleConnection(conn net.Conn) {
 	}
 }
 
-func (s *TCPServer) processMessage(conn net.Conn, message string) {
+func (s *TCPServer_t) processMessage(conn net.Conn, message string) {
 	args := strings.Fields(message)
 	if len(args) == 0 {
 		shared.DebugPrint("Received empty message, ignoring.")

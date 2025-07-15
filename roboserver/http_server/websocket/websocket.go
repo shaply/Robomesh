@@ -1,7 +1,9 @@
 package websocket
 
-type WSManager struct {
+type WSManager_t struct {
 }
 
 type WSClient struct {
 }
+
+// TODO

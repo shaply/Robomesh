@@ -5,7 +5,10 @@ package robot_manager
 
 import (
 	"context"
+	"roboserver/database"
 	"roboserver/shared"
+	"roboserver/shared/event_bus"
+	"roboserver/shared/event_bus/data_structures"
 	"sync"
 )
 
@@ -18,11 +21,14 @@ import (
 //
 // Thread Safety: All public methods are thread-safe using RWMutex for optimal concurrent access.
 // Lifecycle: Robots are automatically cleaned up when disconnected or when main context is cancelled.
-type RobotManager struct {
-	robotsByID   map[string]shared.RobotHandler // Primary index: device ID -> robot handler
-	robotsByIP   map[string]shared.RobotHandler // Secondary index: IP address -> robot handler
-	mu           sync.RWMutex                   // Protects concurrent access to maps
-	main_context context.Context                // Server-wide context for graceful shutdown coordination
+type RobotManager_t struct {
+	robotsByID        map[string]shared.RobotHandler        // Primary index: device ID -> robot handler
+	robotsByIP        map[string]shared.RobotHandler        // Secondary index: IP address -> robot handler
+	mu                sync.RWMutex                          // Protects concurrent access to maps
+	main_context      context.Context                       // Server-wide context for graceful shutdown coordination
+	dbManager         database.DBManager                    // Database manager for persistent storage
+	eventBus          event_bus.EventBus                    // Event bus for inter-component communication
+	registeringRobots data_structures.Set[RegisteringRobot] // Set of currently registering robots to prevent duplicates
 }
 
 // NewRobotManager creates a new RobotManager instance with the provided context.
@@ -39,11 +45,13 @@ type RobotManager struct {
 //	ctx, cancel := context.WithCancel(context.Background())
 //	manager := NewRobotManager(ctx)
 //	defer cancel() // This will trigger cleanup of all robots
-func NewRobotManager(main_context context.Context) *RobotManager {
-	return &RobotManager{
+func NewRobotManager(main_context context.Context, dbManager database.DBManager, eventBus event_bus.EventBus) RobotManager {
+	return &RobotManager_t{
 		robotsByID:   make(map[string]shared.RobotHandler),
 		robotsByIP:   make(map[string]shared.RobotHandler),
 		main_context: main_context,
+		dbManager:    dbManager,
+		eventBus:     eventBus,
 	}
 }
 
@@ -75,7 +83,7 @@ func NewRobotManager(main_context context.Context) *RobotManager {
 //	if err == shared.ErrRobotTransfer {
 //	    log.Println("Robot successfully moved to new IP")
 //	}
-func (rm *RobotManager) AddRobot(deviceId string, ip string, handler shared.RobotHandler) error {
+func (rm *RobotManager_t) AddRobot(deviceId string, ip string, handler shared.RobotHandler) error {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 retry:
@@ -127,7 +135,7 @@ retry:
 //	manager.RemoveRobot("robot_001", "192.168.1.100") // Remove if both match
 //
 // Thread Safety: This method is thread-safe with proper locking.
-func (rm *RobotManager) RemoveRobot(deviceId string, ip string) error {
+func (rm *RobotManager_t) RemoveRobot(deviceId string, ip string) error {
 	rm.mu.Lock()
 	defer rm.mu.Unlock()
 
@@ -184,7 +192,7 @@ func (rm *RobotManager) RemoveRobot(deviceId string, ip string) error {
 //	for _, robot := range robots {
 //	    fmt.Printf("Robot: %s (%s)\n", robot.GetDeviceID(), robot.GetIP())
 //	}
-func (rm *RobotManager) GetRobots() []shared.Robot {
+func (rm *RobotManager_t) GetRobots() []shared.Robot {
 	rm.mu.RLock()
 	defer rm.mu.RUnlock()
 
@@ -221,7 +229,7 @@ func (rm *RobotManager) GetRobots() []shared.Robot {
 //	if err == nil {
 //	    fmt.Printf("Robot status: %s\n", robot.GetStatus())
 //	}
-func (rm *RobotManager) GetRobot(deviceId string, ip string) (shared.Robot, error) {
+func (rm *RobotManager_t) GetRobot(deviceId string, ip string) (shared.Robot, error) {
 	rm.mu.RLock()
 	defer rm.mu.RUnlock()
 
@@ -261,7 +269,7 @@ func (rm *RobotManager) GetRobot(deviceId string, ip string) (shared.Robot, erro
 //
 // The returned slice is a copy and safe to modify.
 // Thread Safety: Uses read locks for safe concurrent access.
-func (rm *RobotManager) GetDeviceIDs() []string {
+func (rm *RobotManager_t) GetDeviceIDs() []string {
 	rm.mu.RLock()
 	defer rm.mu.RUnlock()
 
@@ -284,7 +292,7 @@ func (rm *RobotManager) GetDeviceIDs() []string {
 //
 // The returned slice is a copy and safe to modify.
 // Thread Safety: Uses read locks for safe concurrent access.
-func (rm *RobotManager) GetIPs() []string {
+func (rm *RobotManager_t) GetIPs() []string {
 	rm.mu.RLock()
 	defer rm.mu.RUnlock()
 
@@ -293,6 +301,18 @@ func (rm *RobotManager) GetIPs() []string {
 		ips = append(ips, ip)
 	}
 	return ips
+}
+
+func (rm *RobotManager_t) GetRegisteringRobots() []RegisteringRobot {
+	rm.mu.RLock()
+	defer rm.mu.RUnlock()
+
+	ch := rm.registeringRobots.Iterate()
+	registeringRobots := make([]RegisteringRobot, 0, len(ch))
+	for registering := range ch {
+		registeringRobots = append(registeringRobots, registering)
+	}
+	return registeringRobots
 }
 
 // SendMessage sends a message to a specific robot identified by device ID, IP, or both.
@@ -321,7 +341,7 @@ func (rm *RobotManager) GetIPs() []string {
 //
 //	msg := shared.Msg{Msg: "START_TASK", Source: "scheduler"}
 //	err := manager.SendMessage("robot_001", "", msg)
-func (rm *RobotManager) SendMessage(deviceId string, ip string, msg shared.Msg) error {
+func (rm *RobotManager_t) SendMessage(deviceId string, ip string, msg shared.Msg) error {
 	rm.mu.RLock()
 	defer rm.mu.RUnlock()
 
@@ -368,7 +388,7 @@ func (rm *RobotManager) SendMessage(deviceId string, ip string, msg shared.Msg) 
 // Prefer SendMessage() for normal robot communication.
 //
 // Thread Safety: Uses read locks for safe concurrent access.
-func (rm *RobotManager) GetHandler(deviceId string, ip string) (shared.RobotHandler, error) {
+func (rm *RobotManager_t) GetHandler(deviceId string, ip string) (shared.RobotHandler, error) {
 	rm.mu.RLock()
 	defer rm.mu.RUnlock()
 
@@ -415,7 +435,7 @@ func (rm *RobotManager) GetHandler(deviceId string, ip string) (shared.RobotHand
 //	for _, handler := range handlers {
 //	    go broadcastShutdown(handler)
 //	}
-func (rm *RobotManager) GetHandlers() []shared.RobotHandler {
+func (rm *RobotManager_t) GetHandlers() []shared.RobotHandler {
 	rm.mu.RLock()
 	defer rm.mu.RUnlock()
 
@@ -424,84 +444,4 @@ func (rm *RobotManager) GetHandlers() []shared.RobotHandler {
 		handlers = append(handlers, handler)
 	}
 	return handlers
-}
-
-// RegisterRobot is the primary entry point for robot registration and lifecycle management.
-//
-// This method handles the complete robot registration workflow:
-// 1. Creates appropriate connection handler based on robot type
-// 2. Adds robot to manager with conflict resolution
-// 3. Starts robot communication goroutines
-// 4. Sets up graceful cleanup on disconnection or server shutdown
-//
-// Parameters:
-//   - deviceID: Unique robot identifier (e.g., "trash_collector_001")
-//   - ip: Robot's network address (e.g., "192.168.1.100")
-//   - robotType: Robot type from shared.ROBOT_FACTORY (e.g., "trash", "door")
-//
-// Returns:
-//   - error: nil on success, or one of:
-//   - shared.ErrNoRobotTypeConnHandler: Unknown robot type
-//   - shared.ErrCreateConnHandler: Failed to create connection handler
-//   - shared.ErrRobotAlreadyExists: Robot already registered
-//   - shared.ErrNoDisconnectChannel: Handler missing disconnect channel
-//
-// Lifecycle Management:
-// - Automatically starts robot communication goroutines
-// - Monitors for disconnection or server shutdown
-// - Cleans up resources when robot disconnects
-// - Handles graceful shutdown when main context is cancelled
-//
-// Thread Safety: All operations are thread-safe and non-blocking.
-//
-// Example:
-//
-//	err := manager.RegisterRobot("trash_001", "192.168.1.100", "trash")
-//	if err != nil {
-//	    log.Printf("Failed to register robot: %v", err)
-//	}
-func (rm *RobotManager) RegisterRobot(deviceID string, ip string, robotType shared.RobotType) error {
-	shared.DebugPrint("Registering robot: %s with device ID: %s", robotType, deviceID)
-	connFunc, ok := shared.ROBOT_FACTORY[robotType]
-	if !ok {
-		shared.DebugPrint("No connection handler for robotype: %s", robotType)
-		return shared.ErrNoRobotTypeConnHandler
-	}
-
-	// TODO: Access http websocket and wait for connection
-
-	connHandler, err := connFunc(deviceID, ip)
-	if err != nil {
-		return shared.ErrCreateConnHandler
-	}
-	err = rm.AddRobot(deviceID, ip, connHandler.GetHandler())
-	if err != nil {
-		return shared.ErrRobotAlreadyExists
-	}
-
-	disconnect := connHandler.GetDisconnectChannel()
-	if disconnect == nil {
-		rm.RemoveRobot(deviceID, ip)
-		shared.DebugPanic("No disconnect channel for robot type %s", robotType)
-		return shared.ErrNoDisconnectChannel
-	}
-	go func() {
-		defer shared.SafeClose(disconnect)
-		if err := connHandler.Start(); err != nil {
-			shared.DebugPrint("Error starting connection handler for robot type %s: %v", robotType, err)
-			return
-		}
-	}()
-	go func() {
-		select {
-		case <-rm.main_context.Done():
-			shared.SafeClose(disconnect)
-		case <-disconnect:
-		}
-		shared.DebugPrint("Connection handler for robot %s disconnected", deviceID)
-		connHandler.Stop()
-		rm.RemoveRobot(deviceID, ip)
-	}()
-
-	return nil
 }

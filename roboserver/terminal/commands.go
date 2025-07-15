@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"roboserver/shared/event_bus"
 	"roboserver/shared/robot_manager"
 )
 
@@ -22,7 +23,8 @@ type CommandInfo struct {
 // CommandContext provides context for command execution
 type CommandContext struct {
 	Conn         net.Conn
-	RobotManager *robot_manager.RobotManager
+	RobotManager robot_manager.RobotManager
+	EventBus     event_bus.EventBus // Event bus for inter-component communication
 	Cancel       context.CancelFunc
 }
 

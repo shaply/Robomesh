@@ -6,18 +6,20 @@ import (
 	"net/http"
 	"os"
 	"roboserver/shared"
+	"roboserver/shared/event_bus"
 	"roboserver/shared/robot_manager"
 
 	"github.com/go-chi/chi/v5"
 )
 
-type HTTPServer struct {
-	rm     *robot_manager.RobotManager
+type HTTPServer_t struct {
+	rm     robot_manager.RobotManager
+	eb     event_bus.EventBus
 	router *chi.Mux
 	srv    *http.Server
 }
 
-func Start(ctx context.Context, rm *robot_manager.RobotManager) error {
+func Start(ctx context.Context, rm robot_manager.RobotManager, eb event_bus.EventBus) error {
 	r := chi.NewRouter()
 
 	// Get port
@@ -31,8 +33,9 @@ func Start(ctx context.Context, rm *robot_manager.RobotManager) error {
 	}
 	defer srv.Shutdown(ctx)
 
-	s := &HTTPServer{
+	s := &HTTPServer_t{
 		rm:     rm,
+		eb:     eb,
 		router: r,
 		srv:    srv,
 	}
@@ -64,7 +67,7 @@ func Start(ctx context.Context, rm *robot_manager.RobotManager) error {
 	return nil
 }
 
-func (h *HTTPServer) GETHandleHome(w http.ResponseWriter, r *http.Request) {
+func (h *HTTPServer_t) GETHandleHome(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Hello from RoboHub!")
 
 	fmt.Fprintln(w, "Available robots:")
