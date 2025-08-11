@@ -41,6 +41,7 @@ import (
 	"roboserver/shared"
 	"roboserver/shared/event_bus"
 	"roboserver/shared/robot_manager"
+	"roboserver/shared/utils"
 	"roboserver/tcp_server"
 	"roboserver/terminal"
 	"sync"
@@ -109,7 +110,7 @@ func main() {
 
 	shared.DebugPrint("Server is running on the following IPs:")
 	// Print local IPs
-	localIPs := shared.GetLocalIPs()
+	localIPs := utils.GetLocalIPs()
 	for _, ip := range localIPs {
 		shared.DebugPrint("%s", ip)
 	}
@@ -123,13 +124,16 @@ func main() {
 	// Initialize database manager
 	dbManager, err := database.Start(ctx)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to initialize databases: %v", err))
+		shared.DebugPrint("Failed to initialize databases: %v", err)
+		// panic(fmt.Sprintf("Failed to initialize databases: %v", err))
 	}
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		<-ctx.Done()
-		dbManager.Stop() // Ensure databases are stopped on context cancellation
+		if dbManager != nil {
+			dbManager.Stop() // Ensure databases are stopped on context cancellation
+		}
 	}()
 
 	// Initialize robot manager

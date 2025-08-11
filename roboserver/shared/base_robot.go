@@ -8,6 +8,7 @@ package shared
 import (
 	"encoding/json"
 	"fmt"
+	"roboserver/shared/utils"
 )
 
 // Constructor Functions
@@ -503,7 +504,7 @@ func (brc *BaseRobotConnHandler) Start() error {
 // This method may be called concurrently with other handler methods and
 // should handle synchronization appropriately.
 func (brc *BaseRobotConnHandler) Stop() error {
-	SafeClose(brc.DisconnectChan)
+	utils.SafeClose(brc.DisconnectChan)
 	return nil
 }
 

@@ -65,6 +65,7 @@ func handleConnection(ctx context.Context, conn net.Conn, robotHandler robot_man
 		RobotManager: robotHandler,
 		EventBus:     eventBus,
 		Cancel:       cancel,
+		Subscriber:   event_bus.NewSubscriber(),
 	}
 
 	// Send welcome message

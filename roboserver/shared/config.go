@@ -29,6 +29,8 @@ const (
 	MONGODB_MAX_POOL_SIZE = 10
 
 	REGISTERING_WAIT_TIMEOUT = 30 * time.Minute
+
+	EVENT_BUS_BUFFER_SIZE = 1000 // Buffer size for event bus to handle high-frequency events
 )
 
 // InitConfig initializes server configuration from environment variables.

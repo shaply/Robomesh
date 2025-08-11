@@ -23,3 +23,10 @@ However, if you want to change the way the messages from the robot are parsed, p
   - `ERROR UNKNOWN`: The error is ambiguous.
 
 `TRANSFER`: Stalls the TCP connection handler (so the TCP server stops reading), and gives the reading and writing functionality solely to the robot handling go routine. The message it sends to the go routine will have a reply channel and a message of TRANSFER and when the Go routine wants to stop parsing the TCP connection, it just needs to write to the reply channel.
+
+`UNREGISTER`: Unregisters the robot from the server.
+- Input:
+  - `UNREGISTER <RobotID>`
+    - `<RobotID>`: String, max 32 chars, self generated ID
+- Response: `OK` on success.
+  - `ERROR UNREGISTER_FAILED`: The robot couldn't be unregistered.

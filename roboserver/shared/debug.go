@@ -13,6 +13,7 @@
 // - Clean function name extraction
 // - Package-aware formatting
 // - Conditional panic behavior for development vs production
+// - Color-coded output for different log levels
 
 // shared/debug.go
 package shared
@@ -24,6 +25,51 @@ import (
 	"strings"
 )
 
+// ANSI color codes
+const (
+	ColorReset  = "\033[0m"
+	ColorRed    = "\033[31m"
+	ColorGreen  = "\033[32m"
+	ColorYellow = "\033[33m"
+	ColorBlue   = "\033[34m"
+	ColorPurple = "\033[35m"
+	ColorCyan   = "\033[36m"
+	ColorWhite  = "\033[37m"
+	ColorGray   = "\033[90m"
+
+	// Bold colors
+	ColorBoldRed    = "\033[1;31m"
+	ColorBoldGreen  = "\033[1;32m"
+	ColorBoldYellow = "\033[1;33m"
+	ColorBoldBlue   = "\033[1;34m"
+	ColorBoldPurple = "\033[1;35m"
+	ColorBoldCyan   = "\033[1;36m"
+	ColorBoldWhite  = "\033[1;37m"
+)
+
+// TempDebugPrint can be used for temporary debug messages that include file/line info.
+func TempDebugPrint(format string, args ...interface{}) {
+	if !DEBUG_MODE {
+		return
+	}
+
+	// Use runtime.Caller(1) to get the caller of TempDebugPrint
+	pc, file, line, ok := runtime.Caller(1)
+	if !ok {
+		log.Printf(ColorPurple+"TEMP DEBUG: "+format+ColorReset+"\n", args...)
+		return
+	}
+
+	// Get just the filename (not full path)
+	filename := filepath.Base(file)
+
+	// Get function name
+	funcName := runtime.FuncForPC(pc).Name()
+	funcName = getShortFuncName(funcName)
+
+	log.Printf(ColorPurple+"TEMP [%s:%d %s]: "+format+ColorReset+"\n", append([]interface{}{filename, line, funcName}, args...)...)
+}
+
 // DebugPrint automatically gets file, line, and function info
 func DebugPrint(format string, args ...interface{}) {
 	if !DEBUG_MODE {
@@ -33,7 +79,7 @@ func DebugPrint(format string, args ...interface{}) {
 	// Use runtime.Caller(1) to get the caller of DebugPrint
 	pc, file, line, ok := runtime.Caller(1)
 	if !ok {
-		log.Printf("DEBUG: "+format+"\n", args...)
+		log.Printf(ColorCyan+"DEBUG: "+format+ColorReset+"\n", args...)
 		return
 	}
 
@@ -45,27 +91,46 @@ func DebugPrint(format string, args ...interface{}) {
 	funcName = getShortFuncName(funcName)
 
 	// Format: [filename:line funcName] message
-	log.Printf("[%s:%d %s]: "+format+"\n", append([]interface{}{filename, line, funcName}, args...)...)
+	log.Printf(ColorCyan+"[%s:%d %s]: "+format+ColorReset+"\n", append([]interface{}{filename, line, funcName}, args...)...)
 }
 
 // DebugError prints an error message with file/line info
 func DebugError(err error) {
 	if !DEBUG_MODE {
-		log.Printf("ERROR: %v\n", err)
+		log.Printf(ColorRed+"ERROR: %v"+ColorReset+"\n", err)
 		return
 	}
 
 	// Use runtime.Caller(1) to get the caller of DebugError
 	pc, file, line, ok := runtime.Caller(1)
 	if !ok {
-		log.Printf("ERROR: %v\n", err)
+		log.Printf(ColorRed+"ERROR: %v"+ColorReset+"\n", err)
 		return
 	}
 
 	filename := filepath.Base(file)
 	funcName := getShortFuncName(runtime.FuncForPC(pc).Name())
 
-	log.Printf("ERROR [%s:%d %s]: %v\n", filename, line, funcName, err)
+	log.Printf(ColorRed+"ERROR [%s:%d %s]: %v"+ColorReset+"\n", filename, line, funcName, err)
+}
+
+func DebugErrorf(format string, args ...interface{}) {
+	if !DEBUG_MODE {
+		log.Printf(ColorRed+"ERROR: "+format+ColorReset+"\n", args...)
+		return
+	}
+
+	// Use runtime.Caller(1) to get the caller of DebugErrorf
+	pc, file, line, ok := runtime.Caller(1)
+	if !ok {
+		log.Printf(ColorRed+"ERROR: "+format+ColorReset+"\n", args...)
+		return
+	}
+
+	filename := filepath.Base(file)
+	funcName := getShortFuncName(runtime.FuncForPC(pc).Name())
+
+	log.Printf(ColorRed+"ERROR [%s:%d %s]: "+format+ColorReset+"\n", append([]interface{}{filename, line, funcName}, args...)...)
 }
 
 // DebugPrintWithPackage shows package/file:line format
@@ -77,7 +142,7 @@ func DebugPrintWithPackage(format string, args ...interface{}) {
 	// Use runtime.Caller(1) to get the caller of DebugPrintWithPackage
 	pc, file, line, ok := runtime.Caller(1)
 	if !ok {
-		log.Printf("DEBUG: "+format, args...)
+		log.Printf(ColorBlue+"DEBUG: "+format+ColorReset, args...)
 		return
 	}
 
@@ -86,27 +151,27 @@ func DebugPrintWithPackage(format string, args ...interface{}) {
 	filename := filepath.Base(file)
 	funcName := getShortFuncName(runtime.FuncForPC(pc).Name())
 
-	log.Printf("[%s/%s:%d %s]: "+format,
+	log.Printf(ColorBlue+"[%s/%s:%d %s]: "+format+ColorReset,
 		append([]interface{}{packagePath, filename, line, funcName}, args...)...)
 }
 
 func DebugPanic(format string, args ...interface{}) {
 	if !DEBUG_MODE {
-		log.Printf("CRITICAL ERROR (would panic in debug): "+format, args...)
+		log.Printf(ColorBoldRed+"CRITICAL ERROR (would panic in debug): "+format+ColorReset, args...)
 		return
 	}
 
 	// Use runtime.Caller(1) to get the caller of DebugPanic
 	pc, file, line, ok := runtime.Caller(1)
 	if !ok {
-		log.Panicf("PANIC: "+format, args...)
+		log.Panicf(ColorBoldRed+"PANIC: "+format+ColorReset, args...)
 		return
 	}
 
 	filename := filepath.Base(file)
 	funcName := getShortFuncName(runtime.FuncForPC(pc).Name())
 
-	log.Panicf("PANIC [%s:%d %s]: "+format,
+	log.Panicf(ColorBoldRed+"PANIC [%s:%d %s]: "+format+ColorReset,
 		append([]interface{}{filename, line, funcName}, args...)...)
 }
 

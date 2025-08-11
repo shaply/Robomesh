@@ -88,10 +88,14 @@ func (s *TCPServer_t) processMessage(conn net.Conn, message string) {
 	}
 
 	switch args[0] {
+	case "ENCR":
+		// Handle encryption
 	case "REGISTER":
 		handleRegister(s, conn, args)
 	case "TRANSFER":
 		handleTransfer(s, conn, args[0])
+	case "UNREGISTER":
+		handleUnregister(s, conn, args[0])
 	default:
 		handleDefault(s, conn, message)
 	}

@@ -26,6 +26,7 @@ type CommandContext struct {
 	RobotManager robot_manager.RobotManager
 	EventBus     event_bus.EventBus // Event bus for inter-component communication
 	Cancel       context.CancelFunc
+	Subscriber   *event_bus.Subscriber // Subscriber for event handling
 }
 
 // CommandRegistry holds all registered commands

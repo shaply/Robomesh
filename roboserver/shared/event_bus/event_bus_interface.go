@@ -18,4 +18,6 @@ type EventBus interface {
 	// Handlers are called asynchronously in separate goroutines.
 	// No-op if event is nil or has no subscribers.
 	Publish(event Event)
+
+	PublishData(eventType string, data interface{})
 }

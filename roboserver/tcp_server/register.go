@@ -30,6 +30,8 @@ func handleRegister(s *TCPServer_t, conn net.Conn, args []string) {
 			conn.Write([]byte("ERROR ROBOT_ALREADY_EXISTS\n"))
 		case shared.ErrNoDisconnectChannel:
 			conn.Write([]byte("ERROR NO_DISCONNECT_CHANNEL\n"))
+		case shared.ErrRobotNotAccepted:
+			conn.Write([]byte("ERROR ROBOT_NOT_ACCEPTED\n"))
 		default:
 			conn.Write([]byte("ERROR UNKNOWN\n"))
 		}
@@ -38,4 +40,14 @@ func handleRegister(s *TCPServer_t, conn net.Conn, args []string) {
 
 	shared.DebugPrint("Robot registered successfully: %s (%s)", robotType, deviceID)
 	conn.Write([]byte("OK\n"))
+}
+
+func handleUnregister(s *TCPServer_t, conn net.Conn, deviceID string) {
+	if err := s.rm.RemoveRobot(deviceID, conn.RemoteAddr().(*net.TCPAddr).IP.String()); err != nil {
+		conn.Write([]byte("ERROR UNREGISTER_FAILED\n"))
+		shared.DebugPrint("Failed to unregister robot %s: %v", deviceID, err)
+		return
+	}
+	conn.Write([]byte("OK\n"))
+	shared.DebugPrint("Robot unregistered successfully: %s", deviceID)
 }

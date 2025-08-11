@@ -2,20 +2,8 @@
 
 ## URGENT
 
-- Create the EventBus, so create the publisher subscriber interface for both to use
-  - The websockets will now just subscribe to the EventBus
-  - The robot manager can store a `SafeSet` with each robot that is trying to register so other servers can easily get the enqueue robots and the robot manager can spawn a Go routine for each robot that's trying to register that watches for the event `deviceID.register` success or failure and then removes it from the enqueue set.
-  - Need to change the Register flow to tell the robot that it is enqueue so it knows its REGISTER request arrived
-  - Subscriber is an interface that has a Handle(Event) method
-  - The backing publisher data structure is a `map[string]{map[subscriber]*node, *node}`
-  - `node` has the `prev`, `next`, `subscriber`
-  - Then you can call eventbus.subscribe(eventType, subscriber)
-  - Then publishers can call eventbus.publish(event)
-  - Can implement a base struct for event bus and 
-  - Can use this and extend it to general robots so video robots can easily transfer video
-  - The events should be named like `deviceid.event_name` and the general events will be `robot_manager.event_name`
-  - Use the safe doubly linked list from proximity chat and a map (not the main overarching subscriptions map, just a map to hold location of client) to handle subcribing and unsubscribing
-  - Each WSClient should have their own Go routine that handles a message queue and sending a message to all subscribers essentially just adds the message on the message queue to prevent blocking
+- Finish the register flow.
+  - Just need to use the `notifyComponent` method and create a notification component and then POST to the `/robot/register` route with the `RegisterRobotRequest` json body.
 
 ## Proposed order of attack
 
@@ -53,6 +41,7 @@
   - Maybe, each device comes with its own account and when changing devices, you get a file that is the export of all registered devices with it and you can upload them to the other device
 - Create a robot that just lists the time using the LED thing and it will just display the hour number
   - If have another arduino, test the proximity robot and the clock robot in tandem
+- Create the ability to use websockets on frontend and Go server
 
 ### Roboserver
 
@@ -79,4 +68,16 @@
   - Basically, when a message fails to send because the server is unreachable, enter a state of waiting for the server to come back to life or something like that and when the server comes back, reregister, then continue as normal
 
 ### Frontend_app
-- Create the global websocket
+- Change the layout.svelte files to where the navbar is in the base layout and it renders links, that way, you can move the Notification toast there too.
+- Store the auth token as a cookie. Look at notes.md for more info on svelte cookies. Answer is in the website.
+- Change the way eSess is fetched because if the eSess is sent before the event listener is added, then it won't set the eSess properly.
+- If the backend server is off and the client reaches out, they will fail. But then, if the backend server starts up, the client won't check auth again. Need to add periodic checks.
+  - I think the best solution is to just add a loading page where if the person can't connect, it'll redirect to loading page and loading page will keep trying to connect, then when the server is back up, it brings the user back to the page they were on.
+
+## Considerations
+
+- Maybe use some SPA (single page thingy for frontend) to reduce overhead of events
+
+# Notes
+
+- This could be extropolated to treat any device as a robot as long as you create a translation layer, so like you could treat a website as a robot if you create a translation layer, dockerize it so it comes from a "different" ip than localhost, and have it act as an intermediary between the go server the website

@@ -5,6 +5,7 @@ import (
 	"net"
 	"roboserver/shared"
 	"roboserver/shared/event_bus"
+	"roboserver/shared/utils"
 	"time"
 )
 
@@ -18,7 +19,7 @@ type RegisteringRobot struct {
 // It publishes an event to the event bus with the registration details.
 func (r RegisteringRobot) HandleRegister(eb event_bus.EventBus, acceptance bool) {
 	eb.Publish(event_bus.NewDefaultEvent(
-		fmt.Sprintf("register.%s%s%s", r.DeviceID, r.IP, r.RobotType),
+		fmt.Sprintf(HANDLE_REGISTERING_ROBOT_EVENT_FMT, r.DeviceID, r.IP, r.RobotType),
 		acceptance,
 	))
 }
@@ -30,7 +31,7 @@ type EventRegisteringRobot struct {
 
 func NewEventRegisteringRobot(reg *RegisteringRobot) *EventRegisteringRobot {
 	return &EventRegisteringRobot{
-		Type: "robot_manager.registering_robot",
+		Type: REGISTERING_ROBOT_EVENT,
 		Data: *reg,
 	}
 }
@@ -46,7 +47,7 @@ func (rm *RobotManager_t) handleRegisteringRobotEvent(deviceID string, ip string
 		RobotType: robotType,
 	}
 
-	eventString := fmt.Sprintf("register.%s%s%s", deviceID, ip, robotType)
+	eventString := fmt.Sprintf(HANDLE_REGISTERING_ROBOT_EVENT_FMT, deviceID, ip, robotType)
 	channel := make(chan bool)
 	sub := rm.eventBus.Subscribe(eventString, nil, func(event event_bus.Event) {
 		b, ok := event.GetData().(bool)
@@ -63,7 +64,7 @@ func (rm *RobotManager_t) handleRegisteringRobotEvent(deviceID string, ip string
 	rm.registeringRobots.Add(regRobot)
 	rm.eventBus.Publish(NewEventRegisteringRobot(&regRobot))
 
-	accepted := false
+	var accepted bool
 	select {
 	case accepted = <-channel:
 	case <-rm.main_context.Done():
@@ -85,6 +86,13 @@ func (e *EventRegisteringRobot) GetType() string {
 
 func (e *EventRegisteringRobot) GetData() interface{} {
 	return e.Data
+}
+
+func (e *EventRegisteringRobot) GetDataPtr() *interface{} {
+	// Allocate on heap to avoid stack pointer issues
+	data := new(interface{})
+	*data = &e.Data
+	return data
 }
 
 // RegisterRobot is the primary entry point for robot registration and lifecycle management.
@@ -126,7 +134,7 @@ func (rm *RobotManager_t) RegisterRobot(deviceID string, ip string, robotType sh
 
 	conn.Write([]byte("REGISTERING\n"))
 	accepted := rm.handleRegisteringRobotEvent(deviceID, ip, robotType)
-	if !accepted {
+	if accepted != ACCEPT_REGISTERING_ROBOT_RESPONSE {
 		shared.DebugPrint("Robot registration not accepted: %s", deviceID)
 		return shared.ErrRobotNotAccepted
 	}
@@ -153,7 +161,7 @@ func (rm *RobotManager_t) RegisterRobot(deviceID string, ip string, robotType sh
 		return shared.ErrNoDisconnectChannel
 	}
 	go func() {
-		defer shared.SafeClose(disconnect)
+		defer utils.SafeClose(disconnect)
 		if err := connHandler.Start(); err != nil {
 			shared.DebugPrint("Error starting connection handler for robot type %s: %v", robotType, err)
 			return
@@ -162,7 +170,7 @@ func (rm *RobotManager_t) RegisterRobot(deviceID string, ip string, robotType sh
 	go func() {
 		select {
 		case <-rm.main_context.Done():
-			shared.SafeClose(disconnect)
+			utils.SafeClose(disconnect)
 		case <-disconnect:
 		}
 		shared.DebugPrint("Connection handler for robot %s disconnected", deviceID)

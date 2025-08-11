@@ -6,14 +6,14 @@ import (
 	"roboserver/shared"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/gorilla/websocket"
 )
 
 func (h *HTTPServer_t) RobotRoutes(r chi.Router) {
 	r.Get("/", h.getRobots)
-	r.Get("/ws", h.wsHandler)
-	r.Get("/robot/{robotID}", h.getRobotHandler)                 // Handler to get a specific robot by ID
+	r.Get("/robot/{robotID}", h.getRobotHandler)                 // TODO Handler to get a specific robot by ID
+	r.Post("/robot/{robotID}", h.postRobotHandler)               // TODO Handler to send information to the robot go routine
 	r.Get("/robot/{robotID}/quick_action", h.quickActionHandler) // Handler for quick actions on a robot
+	r.Post("/register", h.registerRobotHandler)
 }
 
 func (h *HTTPServer_t) getRobots(w http.ResponseWriter, r *http.Request) {
@@ -31,6 +31,9 @@ func (h *HTTPServer_t) getRobots(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sendJSONResponse(w, response, http.StatusOK)
+}
+
+func (h *HTTPServer_t) postRobotHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPServer_t) getRobotHandler(w http.ResponseWriter, r *http.Request) {
@@ -72,19 +75,27 @@ func (h *HTTPServer_t) validateRobotID(robotID string) shared.Robot {
 	}
 }
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all origins for WebSocket connections, TODO: Implement proper origin checks
-	},
-}
-
-// TODO: Implement WebSocket handling logic
-func (h *HTTPServer_t) wsHandler(w http.ResponseWriter, r *http.Request) {
-	_, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		shared.DebugPrint("Failed to upgrade connection:", err)
-		http.Error(w, "Failed to upgrade connection", http.StatusInternalServerError)
+func (h *HTTPServer_t) registerRobotHandler(w http.ResponseWriter, r *http.Request) {
+	session := GetSessionFromRequest(r)
+	if session == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
+	var registerRobotRequest RegisterRobotRequest
+	if err := parseJSONRequest(r, &registerRobotRequest); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	// Handle the registration logic here
+	switch registerRobotRequest.Accept {
+	case "yes":
+		registerRobotRequest.Robot.HandleRegister(h.eb, true)
+	case "no":
+		registerRobotRequest.Robot.HandleRegister(h.eb, false)
+	default:
+		http.Error(w, "Invalid accept value", http.StatusBadRequest)
+		return
+	}
 }

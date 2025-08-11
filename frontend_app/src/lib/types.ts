@@ -6,3 +6,9 @@ export interface BaseRobot {
   status: string;
   last_seen: number;
 }
+
+export interface RegisteringRobotEvent {
+  device_id: string;
+  ip?: string;
+  robot_type: string;
+}

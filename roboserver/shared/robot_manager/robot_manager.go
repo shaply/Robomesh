@@ -7,8 +7,9 @@ import (
 	"context"
 	"roboserver/database"
 	"roboserver/shared"
+	"roboserver/shared/data_structures"
 	"roboserver/shared/event_bus"
-	"roboserver/shared/event_bus/data_structures"
+	"roboserver/shared/utils"
 	"sync"
 )
 
@@ -22,13 +23,13 @@ import (
 // Thread Safety: All public methods are thread-safe using RWMutex for optimal concurrent access.
 // Lifecycle: Robots are automatically cleaned up when disconnected or when main context is cancelled.
 type RobotManager_t struct {
-	robotsByID        map[string]shared.RobotHandler        // Primary index: device ID -> robot handler
-	robotsByIP        map[string]shared.RobotHandler        // Secondary index: IP address -> robot handler
-	mu                sync.RWMutex                          // Protects concurrent access to maps
-	main_context      context.Context                       // Server-wide context for graceful shutdown coordination
-	dbManager         database.DBManager                    // Database manager for persistent storage
-	eventBus          event_bus.EventBus                    // Event bus for inter-component communication
-	registeringRobots data_structures.Set[RegisteringRobot] // Set of currently registering robots to prevent duplicates
+	robotsByID        map[string]shared.RobotHandler            // Primary index: device ID -> robot handler
+	robotsByIP        map[string]shared.RobotHandler            // Secondary index: IP address -> robot handler
+	mu                sync.RWMutex                              // Protects concurrent access to maps
+	main_context      context.Context                           // Server-wide context for graceful shutdown coordination
+	dbManager         database.DBManager                        // Database manager for persistent storage
+	eventBus          event_bus.EventBus                        // Event bus for inter-component communication
+	registeringRobots data_structures.SafeSet[RegisteringRobot] // Set of currently registering robots to prevent duplicates
 }
 
 // NewRobotManager creates a new RobotManager instance with the provided context.
@@ -47,11 +48,12 @@ type RobotManager_t struct {
 //	defer cancel() // This will trigger cleanup of all robots
 func NewRobotManager(main_context context.Context, dbManager database.DBManager, eventBus event_bus.EventBus) RobotManager {
 	return &RobotManager_t{
-		robotsByID:   make(map[string]shared.RobotHandler),
-		robotsByIP:   make(map[string]shared.RobotHandler),
-		main_context: main_context,
-		dbManager:    dbManager,
-		eventBus:     eventBus,
+		robotsByID:        make(map[string]shared.RobotHandler),
+		robotsByIP:        make(map[string]shared.RobotHandler),
+		main_context:      main_context,
+		dbManager:         dbManager,
+		eventBus:          eventBus,
+		registeringRobots: *data_structures.NewSafeSet[RegisteringRobot](), // Initialize the SafeSet
 	}
 }
 
@@ -148,7 +150,7 @@ func (rm *RobotManager_t) RemoveRobot(deviceId string, ip string) error {
 			return shared.ErrRobotMismatch // Assuming this error is defined in shared package
 		} else {
 			handler := rm.robotsByID[deviceId]
-			shared.SafeClose(handler.GetDisconnectChannel())
+			utils.SafeClose(handler.GetDisconnectChannel())
 			delete(rm.robotsByID, deviceId)
 			delete(rm.robotsByIP, ip)
 			return nil
@@ -156,7 +158,7 @@ func (rm *RobotManager_t) RemoveRobot(deviceId string, ip string) error {
 	}
 	if deviceId != "" {
 		if handler, exists := rm.robotsByID[deviceId]; exists {
-			shared.SafeClose(handler.GetDisconnectChannel())
+			utils.SafeClose(handler.GetDisconnectChannel())
 			delete(rm.robotsByID, deviceId)
 			delete(rm.robotsByIP, handler.GetIP()) // Assuming GetRobot() returns a BaseRobot with IP
 			return nil
@@ -165,7 +167,7 @@ func (rm *RobotManager_t) RemoveRobot(deviceId string, ip string) error {
 	}
 	if ip != "" {
 		if handler, exists := rm.robotsByIP[ip]; exists {
-			shared.SafeClose(handler.GetDisconnectChannel())
+			utils.SafeClose(handler.GetDisconnectChannel())
 			delete(rm.robotsByIP, ip)
 			delete(rm.robotsByID, handler.GetDeviceID()) // Assuming GetRobot() returns a BaseRobot with DeviceID
 			return nil

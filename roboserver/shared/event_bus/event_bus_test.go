@@ -22,6 +22,10 @@ func (te *TestEvent) GetData() interface{} {
 	return te.data
 }
 
+func (te *TestEvent) GetDataPtr() *interface{} {
+	return &te.data // Return pointer to data
+}
+
 // Basic functionality tests
 func TestEventBusSubscribe(t *testing.T) {
 	eb := NewEventBus()

@@ -20,6 +20,20 @@ func listRobotsCommand(ctx *CommandContext, args []string) error {
 	return nil
 }
 
+func listRegisteringCommand(ctx *CommandContext, args []string) error {
+	registeringRobots := ctx.RobotManager.GetRegisteringRobots()
+	if len(registeringRobots) == 0 {
+		ctx.Conn.Write([]byte("No robots currently registering.\n"))
+		return nil
+	}
+
+	ctx.Conn.Write([]byte("Registering robots:\n"))
+	for _, robot := range registeringRobots {
+		ctx.Conn.Write([]byte(fmt.Sprintf("  %v\n", robot)))
+	}
+	return nil
+}
+
 func stopCommand(ctx *CommandContext, args []string) error {
 	if len(args) < 1 {
 		return fmt.Errorf("usage: stop program|<robot_id>")
