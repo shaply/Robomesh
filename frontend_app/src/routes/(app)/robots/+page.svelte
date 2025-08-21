@@ -5,7 +5,6 @@
   import SearchBar from "$lib/components/search-bar.svelte";
   import type { BaseRobot } from "$lib/types.js";
   import { onMount, onDestroy } from "svelte";
-  import { eventSourceManager } from "$lib/backend/event_source/EventSourceManager.js";
 
   // Receive data from layout (including events array)
 

@@ -10,6 +10,8 @@
 // to embed BaseRobot while adding their own specialized fields and behaviors.
 package shared
 
+import "net/http"
+
 // RobotType represents the category of robot and determines its capabilities.
 // Used by the factory pattern to create appropriate handlers for different robot types.
 type RobotType string
@@ -120,12 +122,14 @@ type BaseRobotHandler struct {
 // Thread Safety:
 // Implementations should be thread-safe for concurrent access from multiple goroutines.
 type RobotHandler interface {
-	GetRobot() Robot                 // Access robot state for API responses and status checks
-	SendMsg(msg Msg) error           // Queue message for asynchronous processing by robot
-	GetDeviceID() string             // Get unique robot identifier for routing and logging
-	GetIP() string                   // Get current IP address for network diagnostics
-	GetDisconnectChannel() chan bool // Get coordination channel for graceful shutdown
-	QuickAction()                    // Perform immediate status check or health ping
+	GetRobot() Robot                                    // Access robot state for API responses and status checks
+	SendMsg(msg Msg) error                              // Queue message for asynchronous processing by robot
+	GetDeviceID() string                                // Get unique robot identifier for routing and logging
+	GetIP() string                                      // Get current IP address for network diagnostics
+	GetDisconnectChannel() chan bool                    // Get coordination channel for graceful shutdown
+	QuickAction(w http.ResponseWriter, r *http.Request) // Perform immediate status check or health ping
+	GET(w http.ResponseWriter, r *http.Request)         // Handle GET requests for robot state
+	POST(w http.ResponseWriter, r *http.Request)        // Handle POST requests for robot actions
 }
 
 // Msg defines the interface for inter-component message passing.

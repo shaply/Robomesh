@@ -57,4 +57,6 @@ type RobotManager interface {
 	// GetHandlers returns all robot handlers for bulk operations.
 	// Useful for broadcasting messages and administrative operations.
 	GetHandlers() []shared.RobotHandler
+
+	ValidateRobotID(robotID string) shared.Robot
 }

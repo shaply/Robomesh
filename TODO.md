@@ -2,8 +2,9 @@
 
 ## URGENT
 
-- Finish the register flow.
-  - Just need to use the `notifyComponent` method and create a notification component and then POST to the `/robot/register` route with the `RegisterRobotRequest` json body.
+- Add local SQL and maybe mongodb to yoga.
+  - Use MySQL for the database so you can practice with it.
+- Test the Wifi class for the arduino to see if it works.
 
 ## Proposed order of attack
 
@@ -11,15 +12,10 @@
   - Needs `tcpsend` and `tcpreceive`
   - Needs encryption key (but don't need to implement this stuff yet, just include it in the class)
   - Needs to be able to connect to TCP sessions, communicate, disconnect, reconnect
-- Create the register robot web flow where the user chooses to if the robot should be stored and registered. Use websockets.
-  - The robot manager can store a `SafeSet` with each robot that is trying to register so other servers can easily get the enqueue robots and the robot manager can spawn a Go routine for each robot that's trying to register that watches for the event `deviceID.register` success or failure and then removes it from the enqueue set.
-  - Need to notify robot of two stages `ENQUEUED` and `OK`. The `ENQUEUED` is to let the robot know that the server got the request and is waiting for verification. On any problems, write `ERROR <ERROR REASON>`
-  - Websockets subscribe to the event `robot_manager.register`
-  - ALSO, change the robot information card page to use websockets as well.
-  - The register robot flow should be a method of the RobomeshWifi class
-  - Robot with device ID and a randomly generated unique encryption key should be stored after successful registration
-    - Use MongoDB because need a NoSQL for less restricted robot storing, maybe other db but Mongo seems like best for now
-    - Perhaps also store a local SQL database with just deviceID, key for quick robot recognition
+- Create the websocket and website connection framework.
+    - When a user clicks on the more for a robot, they should be able to start a websocket connection with the server.
+      - This should be optional because maintaining a websocket connection just shouldn't be necessary.
+      - Could also pass in SSE ID if needed.
 - Code the encrypted messaging, Symmetric encryption, with the key
   - Complete the unique encryption key flow between robot and server
   - Make sure the encryption is relatively light weight
@@ -45,7 +41,6 @@
 
 ### Roboserver
 
-- Create the HTTP GET and POST for the robot communication
 - Check how TCP connection works, check if communication cuts off or if Go keeps the connection up
 - Change REGISTER for new robots where you need to go on the website to register a new robot to connect it and it logs it to a database. This could also pave way for using a encryption password. This could also then be logged to user accounts and the device.
   - This should edit the RobotManager.Register method

@@ -447,3 +447,11 @@ func (rm *RobotManager_t) GetHandlers() []shared.RobotHandler {
 	}
 	return handlers
 }
+
+func (rm *RobotManager_t) ValidateRobotID(robotID string) shared.Robot {
+	if robot, err := rm.GetRobot(robotID, ""); err != nil {
+		return nil
+	} else {
+		return robot
+	}
+}

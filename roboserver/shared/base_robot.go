@@ -8,6 +8,7 @@ package shared
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"roboserver/shared/utils"
 )
 
@@ -411,9 +412,23 @@ func (br *BaseRobotHandler) GetDisconnectChannel() chan bool {
 //
 // Thread Safety:
 // Implementations should be thread-safe and non-blocking.
-func (br *BaseRobotHandler) QuickAction() {
+func (br *BaseRobotHandler) QuickAction(w http.ResponseWriter, r *http.Request) {
 	// Base implementation: no-op
 	// Robot-specific handlers should override this method
+	w.WriteHeader(http.StatusNotImplemented)
+	w.Write([]byte("Quick action not implemented"))
+}
+
+func (br *BaseRobotHandler) GET(w http.ResponseWriter, r *http.Request) {
+	// Handle GET requests for robot state
+	w.WriteHeader(http.StatusNotImplemented)
+	w.Write([]byte("GET not implemented"))
+}
+
+func (br *BaseRobotHandler) POST(w http.ResponseWriter, r *http.Request) {
+	// Handle POST requests for robot actions
+	w.WriteHeader(http.StatusNotImplemented)
+	w.Write([]byte("POST not implemented"))
 }
 
 // BaseRobotConnHandler Method Implementations

@@ -22,5 +22,6 @@
 package robots
 
 import (
+	_ "roboserver/robots/example_robot"
 	_ "roboserver/robots/proximity_sensor" // Register proximity sensor robot type
 )
