@@ -3,7 +3,6 @@
     import { slide } from 'svelte/transition';
     import { quintOut } from 'svelte/easing';
 
-    // Icons for different notification types
     const icons = {
         success: '✓',
         error: '✕',
@@ -32,15 +31,15 @@
             <div class="notification__icon">
                 {icons[notification.type]}
             </div>
-            
+
             <div class="notification__content">
                 <div class="notification__title">
                     {notification.title}
                 </div>
                 {#if notification.component}
                     <div class="notification__component-content">
-                        <svelte:component 
-                            this={notification.component.componentClass} 
+                        <svelte:component
+                            this={notification.component.componentClass}
                             {...(notification.component.props || {})}
                             notificationId={notification.id}
                         />
@@ -55,7 +54,7 @@
                     </div>
                 {/if}
             </div>
-            
+
             <div class="notification__actions">
                 {#if notification.action}
                     <button
@@ -65,7 +64,7 @@
                         {notification.action.label}
                     </button>
                 {/if}
-                
+
                 <button
                     class="notification__close"
                     on:click={() => handleRemove(notification.id)}
@@ -86,39 +85,29 @@
         z-index: 1000;
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 10px;
         max-width: 400px;
         pointer-events: none;
     }
 
     .notification {
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
         display: flex;
         align-items: flex-start;
-        gap: 12px;
-        padding: 16px;
-        border-left: 4px solid;
+        gap: 10px;
+        padding: 14px;
+        border-left: 3px solid;
         pointer-events: auto;
         font-family: inherit;
     }
 
-    .notification--success {
-        border-left-color: #10b981;
-    }
-
-    .notification--error {
-        border-left-color: #ef4444;
-    }
-
-    .notification--warning {
-        border-left-color: #f59e0b;
-    }
-
-    .notification--info {
-        border-left-color: #3b82f6;
-    }
+    .notification--success { border-left-color: var(--success); }
+    .notification--error   { border-left-color: var(--error); }
+    .notification--warning { border-left-color: var(--warning); }
+    .notification--info    { border-left-color: var(--info); }
 
     .notification__icon {
         width: 20px;
@@ -128,27 +117,16 @@
         align-items: center;
         justify-content: center;
         font-weight: bold;
-        font-size: 12px;
+        font-size: 11px;
         color: white;
         flex-shrink: 0;
-        margin-top: 2px;
+        margin-top: 1px;
     }
 
-    .notification--success .notification__icon {
-        background-color: #10b981;
-    }
-
-    .notification--error .notification__icon {
-        background-color: #ef4444;
-    }
-
-    .notification--warning .notification__icon {
-        background-color: #f59e0b;
-    }
-
-    .notification--info .notification__icon {
-        background-color: #3b82f6;
-    }
+    .notification--success .notification__icon { background: var(--success); }
+    .notification--error .notification__icon   { background: var(--error); }
+    .notification--warning .notification__icon { background: var(--warning); }
+    .notification--info .notification__icon    { background: var(--info); }
 
     .notification__content {
         flex: 1;
@@ -157,76 +135,75 @@
 
     .notification__title {
         font-weight: 600;
-        font-size: 14px;
-        color: #1f2937;
-        margin-bottom: 4px;
+        font-size: 0.85rem;
+        color: var(--text-primary);
+        margin-bottom: 3px;
     }
 
     .notification__message {
-        font-size: 13px;
-        color: #6b7280;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
         line-height: 1.4;
     }
 
     .notification__component-content {
-        font-size: 13px;
-        color: #374151;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
         line-height: 1.4;
     }
 
     .notification__custom-content {
-        font-size: 13px;
-        color: #374151;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
         line-height: 1.4;
     }
 
-    /* Style elements inside custom content */
     .notification__custom-content :global(button) {
-        background: #f3f4f6;
-        border: 1px solid #d1d5db;
+        background: var(--bg-hover);
+        border: 1px solid var(--border);
         border-radius: 4px;
         padding: 4px 8px;
         font-size: 12px;
         font-weight: 500;
-        color: #374151;
+        color: var(--text-secondary);
         cursor: pointer;
         margin-right: 6px;
         margin-top: 6px;
-        transition: all 0.2s;
+        transition: all 0.15s;
     }
 
     .notification__custom-content :global(button:hover) {
-        background: #e5e7eb;
-        border-color: #9ca3af;
+        background: var(--border);
+        color: var(--text-primary);
     }
 
     .notification__custom-content :global(button.primary) {
-        background: #3b82f6;
-        border-color: #3b82f6;
-        color: white;
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #0b1120;
     }
 
     .notification__custom-content :global(button.primary:hover) {
-        background: #2563eb;
-        border-color: #2563eb;
+        background: var(--accent-hover);
     }
 
     .notification__custom-content :global(button.danger) {
-        background: #ef4444;
-        border-color: #ef4444;
+        background: var(--error);
+        border-color: var(--error);
         color: white;
     }
 
     .notification__custom-content :global(button.danger:hover) {
         background: #dc2626;
-        border-color: #dc2626;
     }
 
     .notification__custom-content :global(input) {
-        border: 1px solid #d1d5db;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
         border-radius: 4px;
         padding: 4px 8px;
         font-size: 12px;
+        color: var(--text-primary);
         margin-right: 6px;
         margin-top: 4px;
     }
@@ -242,32 +219,32 @@
     .notification__actions {
         display: flex;
         align-items: flex-start;
-        gap: 8px;
+        gap: 6px;
         flex-shrink: 0;
     }
 
     .notification__action-btn {
         background: transparent;
-        border: 1px solid #d1d5db;
+        border: 1px solid var(--border);
         border-radius: 4px;
         padding: 4px 8px;
         font-size: 12px;
         font-weight: 500;
-        color: #374151;
+        color: var(--text-secondary);
         cursor: pointer;
-        transition: all 0.2s;
+        transition: all 0.15s;
     }
 
     .notification__action-btn:hover {
-        background: #f3f4f6;
-        border-color: #9ca3af;
+        background: var(--bg-hover);
+        color: var(--text-primary);
     }
 
     .notification__close {
         background: transparent;
         border: none;
-        font-size: 16px;
-        color: #9ca3af;
+        font-size: 14px;
+        color: var(--text-muted);
         cursor: pointer;
         padding: 0;
         width: 20px;
@@ -276,22 +253,21 @@
         align-items: center;
         justify-content: center;
         border-radius: 4px;
-        transition: all 0.2s;
+        transition: all 0.15s;
     }
 
     .notification__close:hover {
-        background: #f3f4f6;
-        color: #6b7280;
+        background: var(--bg-hover);
+        color: var(--text-secondary);
     }
 
-    /* Mobile responsiveness */
     @media (max-width: 480px) {
         .notification-container {
-            left: 20px;
-            right: 20px;
+            left: 12px;
+            right: 12px;
             max-width: none;
         }
-        
+
         .notification {
             padding: 12px;
         }

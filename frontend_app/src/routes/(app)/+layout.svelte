@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from 'svelte';
   import { browser } from '$app/environment';
+  import { page } from '$app/stores';
   import NotificationToast from '$lib/components/NotificationToast.svelte';
   import { notifySuccess, notifyWarning, notifyError, removeNotification, pushNotification } from '$lib/index.js';
   import { eventSourceManager } from '$lib/backend/event_source/EventSourceManager.js';
@@ -10,13 +11,22 @@
   import { authFailureRedirect } from '$lib/utils/failure_redirect.js';
   import type { RegisteringRobotEvent } from '$lib/types.js';
   import RegisteringRobotNotifComponent from '$lib/components/RegisteringRobotNotifComponent.svelte';
-  
+
   let { children } = $props();
+
+  const navLinks = [
+    { href: '/robots', label: 'Robots' },
+    { href: '/provision', label: 'Provision' },
+    { href: '/settings', label: 'Settings' },
+  ];
+
+  function isActive(href: string, pathname: string): boolean {
+    return pathname.startsWith(href);
+  }
 
   function notify_registering_robot(event: EventData) {
     const data = JSON.parse(event.data) as RegisteringRobotEvent;
-    console.log("Registering robot:", data);
-    const notId = pushNotification({
+    pushNotification({
       type: 'info',
       title: 'Registering Robot',
       component: {
@@ -41,11 +51,10 @@
     let warningNotificationId: string | null = null;
     let isResolved = false;
 
-    // Show warning after 3 seconds if still pending
     const warningTimeout = setTimeout(() => {
       if (!isResolved) {
         warningNotificationId = notifyWarning(
-          "Slow Connection", 
+          "Slow Connection",
           "Connecting to server is taking longer than usual...",
           10000
         );
@@ -60,36 +69,29 @@
       isResolved = true;
       clearTimeout(warningTimeout);
 
-      // Remove warning notification if it was shown
       if (warningNotificationId) {
         removeNotification(warningNotificationId);
       }
 
       if (response.ok) {
         notifySuccess("Connected", "Successfully connected to server");
-        eventSourceManager.subscribe("robot_manager.registering_robot", notify_registering_robot);
+        eventSourceManager.subscribe("robot.registering", notify_registering_robot);
       } else if (response.statusText === "Network error") {
-        console.error("Network error while fetching user data");
         notifyError("Network Error", "Please check your internet connection.");
       } else {
-        console.error("Failed to fetch user data:", response.statusText);
         authFailureRedirect();
       }
     } catch (error) {
       isResolved = true;
       clearTimeout(warningTimeout);
 
-      // Remove warning notification if it was shown
       if (warningNotificationId) {
         removeNotification(warningNotificationId);
       }
 
-      console.error("Auth request failed:", error);
       notifyError("Connection Failed", "Unable to connect to server. Please try refreshing.");
-      // Don't redirect immediately - let user try to refresh or wait
     }
 
-    // Set up EventSource for real-time updates
     eventSourceManager.connect();
   });
 
@@ -98,69 +100,176 @@
   })
 </script>
 
-<main class="app-layout">
-  <nav class="navbar">
-    <div class="container">
-      <a href="/robots" class="logo">Dashboard</a>
-      <ul class="nav-links">
-        <li><a href="/robots">Robots</a></li>
-        <li><a href="/settings">Profile</a></li>
-        <li><a href="/logout">Logout</a></li>
-      </ul>
+<div class="app-shell">
+  <nav class="sidebar">
+    <a href="/robots" class="sidebar-logo">
+      <span class="logo-icon">R</span>
+      <span class="logo-text">Robomesh</span>
+    </a>
+
+    <div class="sidebar-links">
+      {#each navLinks as link}
+        <a
+          href={link.href}
+          class="nav-link"
+          class:active={isActive(link.href, $page.url.pathname)}
+        >
+          {link.label}
+        </a>
+      {/each}
+    </div>
+
+    <div class="sidebar-footer">
+      <a href="/login" class="nav-link logout-link">Logout</a>
     </div>
   </nav>
-  <div class="content">
-    {@render children()}
-  </div>
-</main>
 
-<!-- Global notification system -->
+  <main class="main-content">
+    {@render children()}
+  </main>
+</div>
+
 <NotificationToast />
 
 <style>
-  .app-layout {
-    font-family: 'Roboto', sans-serif;
-    background-color: #DDEBF2;
+  .app-shell {
+    display: flex;
     min-height: 100vh;
   }
 
-  .navbar {
-    background-color: #2C516E;
-    color: white;
-    padding: 1.5rem 2.5rem;
+  /* --- Sidebar --- */
+  .sidebar {
+    width: 220px;
+    background: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem 0.75rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 50;
   }
 
-  .navbar .container {
+  .sidebar-logo {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-  }
-
-  .navbar .logo {
-    font-size: 1.5rem;
-    font-weight: bold;
+    gap: 0.65rem;
     text-decoration: none;
-    color: white;
+    padding: 0.25rem 0.75rem;
+    margin-bottom: 1.75rem;
   }
 
-  .navbar .nav-links {
-    list-style: none;
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--accent), #0284c7);
+    border-radius: 8px;
     display: flex;
-    gap: 1rem;
-    margin: 0;
-    padding: 0;
-  }
-
-  .navbar .nav-links li a {
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
     color: white;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  .sidebar-links {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+  }
+
+  .nav-link {
+    display: block;
+    padding: 0.55rem 0.75rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
     text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.12s, color 0.12s;
   }
 
-  .navbar .nav-links li a:hover {
-    text-decoration: underline;
+  .nav-link:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
   }
 
-  .content {
-    padding: 1.5rem 2rem 2rem 2rem;
+  .nav-link.active {
+    background: var(--accent-muted);
+    color: var(--accent);
+  }
+
+  .sidebar-footer {
+    border-top: 1px solid var(--border);
+    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+  }
+
+  .logout-link {
+    color: var(--text-muted);
+  }
+
+  .logout-link:hover {
+    color: var(--error);
+    background: var(--error-muted);
+  }
+
+  /* --- Main content --- */
+  .main-content {
+    flex: 1;
+    margin-left: 220px;
+    padding: 2rem 2.5rem;
+    min-height: 100vh;
+  }
+
+  /* Mobile: collapse sidebar to top bar */
+  @media (max-width: 768px) {
+    .app-shell {
+      flex-direction: column;
+    }
+
+    .sidebar {
+      position: relative;
+      width: 100%;
+      flex-direction: row;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-logo {
+      margin-bottom: 0;
+      padding: 0;
+    }
+
+    .sidebar-links {
+      flex-direction: row;
+      gap: 0;
+      margin-left: 1.5rem;
+    }
+
+    .sidebar-footer {
+      border-top: none;
+      padding-top: 0;
+      margin-top: 0;
+      margin-left: auto;
+    }
+
+    .main-content {
+      margin-left: 0;
+      padding: 1.5rem;
+    }
   }
 </style>

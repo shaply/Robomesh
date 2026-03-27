@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/*
+ * Robomesh Dark Theme
+ * Slate/navy palette with sky-blue accents — fits the robotics dashboard aesthetic.
+ */
+
+:root {
+  /* Surfaces */
+  --bg-base: #0b1120;
+  --bg-surface: #141c2e;
+  --bg-elevated: #1c2740;
+  --bg-hover: #243352;
+
+  /* Borders */
+  --border: #2a3a54;
+  --border-light: #1e2d45;
+
+  /* Text */
+  --text-primary: #e8edf5;
+  --text-secondary: #8899b0;
+  --text-muted: #5a6d85;
+
+  /* Accent (sky blue) */
+  --accent: #38bdf8;
+  --accent-hover: #0ea5e9;
+  --accent-muted: rgba(56, 189, 248, 0.12);
+
+  /* Semantic */
+  --success: #22c55e;
+  --success-muted: rgba(34, 197, 94, 0.12);
+  --error: #ef4444;
+  --error-muted: rgba(239, 68, 68, 0.12);
+  --warning: #f59e0b;
+  --warning-muted: rgba(245, 158, 11, 0.12);
+  --info: #38bdf8;
+  --info-muted: rgba(56, 189, 248, 0.12);
+
+  /* Misc */
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Selection */
+::selection {
+  background: var(--accent-muted);
+  color: var(--accent);
+}

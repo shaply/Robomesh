@@ -5,10 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"roboserver/comms"
 	"roboserver/shared"
 	"roboserver/shared/data_structures"
-	"roboserver/shared/event_bus"
 	"roboserver/shared/utils"
+	"sync"
 	"sync/atomic"
 )
 
@@ -17,25 +18,28 @@ import (
 // Implement the session flow between the HTTP server and the WebSocket server
 
 type EventsClient struct {
-	Writer     http.ResponseWriter
-	Session    EventSession
-	Subscriber *event_bus.Subscriber
-	manager    *EventsManager_t
-	done       chan struct{}
-	msgQueue   *data_structures.SafeQueue[event_bus.Event] // Queue for outgoing messages
+	Writer  http.ResponseWriter
+	Session EventSession
+	manager *EventsManager_t
+	done    chan struct{}
 
-	ended atomic.Bool // Indicates if the client has ended
+	// cancelFuncs tracks subscription cancellation functions by event type.
+	cancelFuncs map[string]func()
+	cancelMu    sync.Mutex
+
+	msgQueue *data_structures.SafeQueue[*comms.Event] // Queue for outgoing messages
+	ended    atomic.Bool                               // Indicates if the client has ended
 }
 
 func NewEventsClient(sess *EventSession, w http.ResponseWriter, manager *EventsManager_t) *EventsClient {
 	return &EventsClient{
-		Writer:     w,
-		Session:    *sess,
-		Subscriber: event_bus.NewSubscriber(),
-		manager:    manager,
-		done:       make(chan struct{}),
-		msgQueue:   data_structures.NewSafeQueue[event_bus.Event](true),
-		ended:      atomic.Bool{},
+		Writer:      w,
+		Session:     *sess,
+		manager:     manager,
+		done:        make(chan struct{}),
+		cancelFuncs: make(map[string]func()),
+		msgQueue:    data_structures.NewSafeQueue[*comms.Event](true),
+		ended:       atomic.Bool{},
 	}
 }
 
@@ -55,7 +59,14 @@ func (client *EventsClient) cleanup() {
 	utils.SafeCloseChannel(client.done)
 	utils.SafeClose(client.msgQueue)
 	client.manager.clients.Delete(client.Session)
-	client.manager.eb.Unsubscribe("", client.Subscriber) // Unsubscribe from all events
+
+	// Cancel all event subscriptions
+	client.cancelMu.Lock()
+	for _, cancel := range client.cancelFuncs {
+		cancel()
+	}
+	client.cancelFuncs = nil
+	client.cancelMu.Unlock()
 }
 
 func (client *EventsClient) ReadMsgQueue() {
@@ -79,7 +90,7 @@ func (client *EventsClient) ReadMsgQueue() {
 		}
 
 		eventID++
-		client.sendSSEEvent(event.GetType(), event.GetData(), fmt.Sprintf("%d", eventID))
+		client.sendSSEEvent(event.Type, event.Data, fmt.Sprintf("%d", eventID))
 	}
 }
 
@@ -129,7 +140,24 @@ func (client *EventsClient) SubscribeToEvent(eventType string) {
 		return
 	}
 
-	client.manager.eb.Subscribe(eventType, client.Subscriber, client.HandleEvent)
+	cancel, err := client.manager.bus.SubscribeEvent(eventType, func(et string, data any) {
+		if client.ended.Load() {
+			return
+		}
+		client.msgQueue.Enqueue(&comms.Event{Type: et, Data: data})
+	})
+	if err != nil {
+		shared.DebugError(fmt.Errorf("failed to subscribe to event %s: %v", eventType, err))
+		return
+	}
+
+	client.cancelMu.Lock()
+	// Cancel existing subscription for this event type if any
+	if existing, ok := client.cancelFuncs[eventType]; ok {
+		existing()
+	}
+	client.cancelFuncs[eventType] = cancel
+	client.cancelMu.Unlock()
 }
 
 func (client *EventsClient) UnsubscribeFromEvent(eventType string) {
@@ -138,14 +166,11 @@ func (client *EventsClient) UnsubscribeFromEvent(eventType string) {
 			eventType))
 		return
 	}
-	client.manager.eb.Unsubscribe(eventType, client.Subscriber)
-}
 
-func (client *EventsClient) HandleEvent(event event_bus.Event) {
-	if client.ended.Load() {
-		shared.DebugError(fmt.Errorf("client has ended, cannot handle event %s",
-			event.GetType()))
-		return
+	client.cancelMu.Lock()
+	if cancel, ok := client.cancelFuncs[eventType]; ok {
+		cancel()
+		delete(client.cancelFuncs, eventType)
 	}
-	client.msgQueue.Enqueue(event)
+	client.cancelMu.Unlock()
 }

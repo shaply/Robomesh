@@ -3,7 +3,6 @@
   import { removeNotification } from "$lib/index.js";
   import type { RegisteringRobotEvent } from "$lib/types.js";
 
-  // Props are automatically passed by the notification system
   let {
     notificationId,
     registering_robot,
@@ -12,7 +11,6 @@
     registering_robot: RegisteringRobotEvent;
   } = $props();
 
-  // State to track the registration process
   let stateNotif = $state<"pending" | "processing" | "success" | "error">("pending");
   let errorMessage = $state<string | null>(null);
 
@@ -26,15 +24,15 @@
       return;
     }
 
-    // Update state to show we're processing
     stateNotif = "processing";
 
     try {
-      const response = await fetchBackend("/robot/register", {
+      const response = await fetchBackend("/register", {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          registering_robot: registering_robot,
-          accept: accept ? "yes" : "no",
+          uuid: registering_robot.device_id,
+          accept: accept,
         }),
       });
 
@@ -44,11 +42,10 @@
         return;
       }
 
-      // Success - update state and close notification after a brief delay
       stateNotif = "success";
       setTimeout(() => {
         removeNotification(notificationId);
-      }, 2000); // Show success message for 2 seconds before closing
+      }, 2000);
 
     } catch (error) {
       stateNotif = "error";
@@ -57,131 +54,133 @@
   }
 </script>
 
-<div class="notification-registering-robot">
+<div class="reg-notif">
   {#if stateNotif === "pending"}
     <div class="robot-info">
-      <p><strong>Type:</strong> {registering_robot.robot_type}</p>
-      <p><strong>Device ID:</strong> {registering_robot.device_id}</p>
-      <p><strong>IP Address:</strong> {registering_robot.ip}</p>
+      <div class="info-row"><span class="info-label">Type</span> <span>{registering_robot.robot_type}</span></div>
+      <div class="info-row"><span class="info-label">ID</span> <span class="mono">{registering_robot.device_id}</span></div>
+      <div class="info-row"><span class="info-label">IP</span> <span class="mono">{registering_robot.ip}</span></div>
     </div>
     <div class="actions">
-      <button onclick={() => registerRobot(registering_robot, true)} class="accept-btn">
-        Accept
-      </button>
-      <button onclick={() => registerRobot(registering_robot, false)} class="reject-btn">
-        Reject
-      </button>
+      <button onclick={() => registerRobot(registering_robot, true)} class="btn-accept">Accept</button>
+      <button onclick={() => registerRobot(registering_robot, false)} class="btn-reject">Reject</button>
     </div>
   {:else if stateNotif === "processing"}
     <div class="processing">
-      <p>Processing registration...</p>
       <div class="spinner"></div>
+      <span>Processing...</span>
     </div>
   {:else if stateNotif === "success"}
-    <div class="success">
-      <p>✅ Robot registration completed successfully!</p>
-    </div>
+    <div class="result-success">Registration completed</div>
   {:else if stateNotif === "error"}
-    <div class="error">
-      <p>❌ {errorMessage}</p>
-      <button onclick={() => stateNotif = "pending"} class="retry-btn">
-        Try Again
-      </button>
+    <div class="result-error">
+      <span>{errorMessage}</span>
+      <button onclick={() => stateNotif = "pending"} class="btn-retry">Retry</button>
     </div>
   {/if}
 </div>
 
 <style>
-  .notification-registering-robot {
-    padding: 1rem;
+  .reg-notif {
+    padding: 0.5rem 0 0 0;
   }
 
   .robot-info {
-    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    margin-bottom: 0.75rem;
   }
 
-  .robot-info p {
-    margin: 0.25rem 0;
-    font-size: 0.9rem;
+  .info-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+  }
+
+  .info-label {
+    color: var(--text-muted);
+    font-weight: 500;
+    min-width: 32px;
+  }
+
+  .mono {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
   }
 
   .actions {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.4rem;
   }
 
-  .accept-btn {
-    background-color: #22c55e;
-    color: white;
+  .btn-accept,
+  .btn-reject,
+  .btn-retry {
     border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 0.25rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     font-weight: 500;
+    font-size: 0.8rem;
+    transition: background-color 0.12s;
   }
 
-  .accept-btn:hover {
-    background-color: #16a34a;
-  }
-
-  .reject-btn {
-    background-color: #ef4444;
+  .btn-accept {
+    background: var(--success);
     color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    font-weight: 500;
+  }
+  .btn-accept:hover {
+    background: #16a34a;
   }
 
-  .reject-btn:hover {
-    background-color: #dc2626;
-  }
-
-  .retry-btn {
-    background-color: #3b82f6;
+  .btn-reject {
+    background: var(--error);
     color: white;
-    border: none;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0.25rem;
-    cursor: pointer;
-    font-size: 0.875rem;
-    margin-top: 0.5rem;
+  }
+  .btn-reject:hover {
+    background: #dc2626;
   }
 
-  .retry-btn:hover {
-    background-color: #2563eb;
+  .btn-retry {
+    background: var(--accent);
+    color: #0b1120;
+    margin-top: 0.4rem;
+  }
+  .btn-retry:hover {
+    background: var(--accent-hover);
   }
 
   .processing {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
   }
 
   .spinner {
-    width: 1rem;
-    height: 1rem;
-    border: 2px solid #e5e7eb;
-    border-top: 2px solid #3b82f6;
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    animation: spin 0.6s linear infinite;
   }
 
   @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    to { transform: rotate(360deg); }
   }
 
-  .success {
-    color: #16a34a;
+  .result-success {
+    color: var(--success);
+    font-size: 0.8rem;
+    font-weight: 500;
   }
 
-  .error {
-    color: #dc2626;
-  }
-
-  .error p {
-    margin: 0 0 0.5rem 0;
+  .result-error {
+    color: var(--error);
+    font-size: 0.8rem;
   }
 </style>

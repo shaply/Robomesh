@@ -1,0 +1,6 @@
+# dbmate configuration
+# Run: DATABASE_URL="postgres://robomesh:PASSWORD@HOST:5432/robomesh_db?sslmode=disable" dbmate up
+url: "${DATABASE_URL}"
+migrations-dir: ./migrations
+schema-file: ./schema.sql
+no-dump-schema: false

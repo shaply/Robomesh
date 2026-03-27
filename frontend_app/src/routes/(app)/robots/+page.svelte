@@ -6,8 +6,6 @@
   import type { BaseRobot } from "$lib/types.js";
   import { onMount, onDestroy } from "svelte";
 
-  // Receive data from layout (including events array)
-
   let robots: BaseRobot[] = [];
   let loading = true;
   let error: string | null = null;
@@ -32,120 +30,151 @@
   }
 
   onMount(() => {
-    // Fetch immediately on mount
     fetchRobots();
-
-    // Set up polling every minute (60000ms)
     intervalId = setInterval(fetchRobots, 60000);
   });
 
   onDestroy(() => {
-    // Clean up interval when component is destroyed
     if (intervalId) {
       clearInterval(intervalId);
     }
   });
 
-  // Function to manually refresh
   function refreshRobots() {
     fetchRobots();
   }
 </script>
 
-<main class="main-layout">
-  <div class="container-buttons">
-    <div class="search-section">
+<div class="page">
+  <div class="page-header">
+    <h1>Active Robots</h1>
+    <p class="page-subtitle">Currently connected robots and their status</p>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-area">
       <SearchBar></SearchBar>
     </div>
-    <div class="buttons-section">
-      <div class="action-buttons">
-        <PageButton>Search</PageButton>
-        <PageButton>Filter+</PageButton>
-      </div>
-      <div class="refresh-buttons">
-        <PageButton on:click={refreshRobots}>Refresh Robots</PageButton>
-      </div>
+    <div class="toolbar-actions">
+      <PageButton>Search</PageButton>
+      <PageButton>Filter+</PageButton>
+      <PageButton on:click={refreshRobots} variant="secondary">Refresh</PageButton>
     </div>
   </div>
-  <div class="robot-cards-container">
+
+  <div class="cards-area">
     {#if loading}
-      <div class="robot-cards-container-text">Loading robots...</div>
+      <div class="state-message">
+        <span class="spinner"></span>
+        Loading robots...
+      </div>
     {:else if error}
-      <div class="error robot-cards-container-text">Error: {error}</div>
+      <div class="state-message state-error">Error: {error}</div>
     {:else if robots.length === 0}
-      <div class="robot-cards-container-text">No robots found.</div>
+      <div class="state-message">
+        <span class="empty-label">No robots connected</span>
+        <span class="empty-hint">Robots will appear here when they connect via TCP</span>
+      </div>
     {:else}
-      {#each robots as robot (robot.device_id)}
-        <RobotCard {robot} />
-      {/each}
+      <div class="cards-grid">
+        {#each robots as robot (robot.device_id)}
+          <RobotCard {robot} />
+        {/each}
+      </div>
     {/if}
   </div>
-</main>
+</div>
 
 <style>
-  .main-layout {
-    font-family: "Roboto", sans-serif;
-    background-color: #ddebf2;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
+  .page {
+    max-width: 1200px;
   }
 
-  .container-buttons {
+  .page-header {
+    margin-bottom: 1.75rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.25rem 0;
+    letter-spacing: -0.02em;
+  }
+
+  .page-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+  }
+
+  .toolbar {
     display: flex;
     align-items: center;
-    margin-bottom: 1rem;
-    border: 1px solid transparent;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .search-area {
+    flex: 1;
+    max-width: 400px;
+  }
+
+  .toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .cards-area {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.25rem;
+    min-height: 300px;
+  }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 1rem;
   }
 
-  .search-section {
-    flex: 1;
+  .state-message {
     display: flex;
+    flex-direction: column;
     align-items: center;
-  }
-
-  .buttons-section {
-    flex: 1;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .action-buttons {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .refresh-buttons {
-    display: flex;
-    align-items: center;
-  }
-
-  .robot-cards-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 0.5rem;
-    border: 1px solid black;
-    flex: 1;
-    border-radius: 10px;
-    padding: 0.5rem;
-    margin: 0.5rem;
-    overflow-y: auto;
-    background-color: #cedde3;
-    align-items: start;
-  }
-
-  .robot-cards-container-text {
-    grid-column: 1 / -1;
-    display: flex;
     justify-content: center;
-    padding: 1rem;
-    text-align: center;
-    color: #374151; /* Dark gray */
-    font-size: 1.2rem;
-    font-weight: 500;
-    font-style: italic;
+    gap: 0.5rem;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+
+  .state-error {
+    color: var(--error);
+  }
+
+  .empty-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .empty-hint {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 </style>

@@ -2,7 +2,6 @@ package terminal
 
 import (
 	"fmt"
-	"roboserver/shared/event_bus"
 )
 
 func subscribeCommand(ctx *CommandContext, args []string) error {
@@ -11,10 +10,20 @@ func subscribeCommand(ctx *CommandContext, args []string) error {
 	}
 
 	eventType := args[0]
-	ctx.EventBus.Subscribe(eventType, ctx.Subscriber, func(event event_bus.Event) {
-		ctx.Conn.Write([]byte(fmt.Sprintf("\nEvent received: %s\n", event.GetType())))
-		ctx.Conn.Write([]byte(fmt.Sprintf("Data: %v\n", event.GetData())))
+	cancel, err := ctx.Bus.SubscribeEvent(eventType, func(et string, data any) {
+		ctx.Conn.Write([]byte(fmt.Sprintf("\nEvent received: %s\n", et)))
+		ctx.Conn.Write([]byte(fmt.Sprintf("Data: %v\n", data)))
 	})
+	if err != nil {
+		return fmt.Errorf("failed to subscribe: %w", err)
+	}
+
+	// Cancel any existing subscription for this event type
+	if existing, ok := ctx.Subscriptions[eventType]; ok {
+		existing()
+	}
+	ctx.Subscriptions[eventType] = cancel
+
 	ctx.Conn.Write([]byte(fmt.Sprintf("Subscribed to event type: %s\n", eventType)))
 	return nil
 }
@@ -25,8 +34,13 @@ func unsubscribeCommand(ctx *CommandContext, args []string) error {
 	}
 
 	eventType := args[0]
-	ctx.EventBus.Unsubscribe(eventType, ctx.Subscriber)
-	ctx.Conn.Write([]byte(fmt.Sprintf("Unsubscribed from event type: %s\n", eventType)))
+	if cancel, ok := ctx.Subscriptions[eventType]; ok {
+		cancel()
+		delete(ctx.Subscriptions, eventType)
+		ctx.Conn.Write([]byte(fmt.Sprintf("Unsubscribed from event type: %s\n", eventType)))
+	} else {
+		ctx.Conn.Write([]byte(fmt.Sprintf("Not subscribed to event type: %s\n", eventType)))
+	}
 	return nil
 }
 
@@ -38,8 +52,9 @@ func publishCommand(ctx *CommandContext, args []string) error {
 	eventType := args[0]
 	data := args[1]
 
-	event := event_bus.NewDefaultEvent(eventType, data)
-	ctx.EventBus.Publish(event)
+	if err := ctx.Bus.PublishEvent(eventType, data); err != nil {
+		return fmt.Errorf("failed to publish: %w", err)
+	}
 	ctx.Conn.Write([]byte("Published event\n"))
 	return nil
 }

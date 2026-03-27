@@ -1,0 +1,89 @@
+# Unified local development stack: PostgreSQL + Redis + Backend
+# Usage: docker compose -f docker-compose.dev.yml up --build
+services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: robomesh
+      POSTGRES_PASSWORD: devpassword
+      POSTGRES_DB: robomesh_db
+    volumes:
+      - robomesh_pg_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01_schema.sql
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U robomesh -d robomesh_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    networks:
+      - robomesh-dev
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass devpassword
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "devpassword", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    networks:
+      - robomesh-dev
+
+  backend:
+    build: ./roboserver
+    ports:
+      - "8080:8080"
+      - "5001:5000"
+      - "6001:6000"
+    environment:
+      - DEBUG=true
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=robomesh
+      - POSTGRES_PASSWORD=devpassword
+      - POSTGRES_DB=robomesh_db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=devpassword
+      - JWT_SECRET=dev-jwt-secret-for-testing-only
+      - HANDLERS_BASE_PATH=/app/handlers
+    volumes:
+      - ./handlers:/app/handlers:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - robomesh-dev
+
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 3000"
+    volumes:
+      - ./frontend_app:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - PUBLIC_BACKEND_IP=localhost
+      - PUBLIC_BACKEND_PORT=8080
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
+    networks:
+      - robomesh-dev
+
+volumes:
+  robomesh_pg_data:
+  frontend_node_modules:
+
+networks:
+  robomesh-dev:
+    driver: bridge

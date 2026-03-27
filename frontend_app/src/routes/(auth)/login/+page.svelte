@@ -9,7 +9,6 @@
   let error = "";
 
   async function handleLogin() {
-    console.log("Attempting to log in with:", { username, password });
     if (!username || !password) {
       error = "Please enter both username and password";
       return;
@@ -28,10 +27,6 @@
       });
 
       if (response.ok) {
-        // Login successful, test if cookie is working
-        console.log("Login successful, testing cookie...");
-        
-        // Make a test request to see if cookie is sent
         try {
           const token = await response.json().then(data => data.token);
           if (token) {
@@ -42,11 +37,11 @@
         } catch (testErr) {
           console.log("Cookie test request failed:", testErr);
         }
-        
+
         goto("/robots");
       } else {
         if (response.status === 401) {
-          error = "Invalid username or password. Please try again.";
+          error = "Invalid username or password.";
         } else {
           error = "Login failed. Please try again later.";
         }
@@ -55,132 +50,171 @@
       console.error("Network error:", err);
       error = "Network error. Please try again.";
     } finally {
-      console.log("Login process completed");
       loading = false;
     }
   }
 </script>
 
-<div class="login-container">
-  <div class="login-card">
-    <h1>Robot Dashboard Login</h1>
-
-    <form on:submit|preventDefault={handleLogin}>
-      <div class="form-group">
-        <label for="username">Username:</label>
-        <input
-          id="username"
-          type="text"
-          bind:value={username}
-          disabled={loading}
-          required
-        />
-      </div>
-
-      <div class="form-group">
-        <label for="password">Password:</label>
-        <input
-          id="password"
-          type="password"
-          bind:value={password}
-          disabled={loading}
-          required
-        />
-      </div>
-
-      {#if error}
-        <div class="error">{error}</div>
-      {/if}
-
-      <button type="submit" disabled={loading} class="login-btn">
-        {loading ? "Logging in..." : "Login"}
-      </button>
-    </form>
+<div class="login-card">
+  <div class="card-header">
+    <h1>Sign in</h1>
+    <p>Access your robot dashboard</p>
   </div>
+
+  <form on:submit|preventDefault={handleLogin}>
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input
+        id="username"
+        type="text"
+        bind:value={username}
+        disabled={loading}
+        placeholder="Enter your username"
+        required
+      />
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        bind:value={password}
+        disabled={loading}
+        placeholder="Enter your password"
+        required
+      />
+    </div>
+
+    {#if error}
+      <div class="error-msg">{error}</div>
+    {/if}
+
+    <button type="submit" disabled={loading} class="login-btn">
+      {#if loading}
+        <span class="spinner"></span>
+        Signing in...
+      {:else}
+        Sign in
+      {/if}
+    </button>
+  </form>
 </div>
 
 <style>
-  .login-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 60vh;
-  }
-
   .login-card {
-    background: white;
-    padding: 2rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem;
     width: 100%;
     max-width: 400px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
 
-  h1 {
-    text-align: center;
+  .card-header {
     margin-bottom: 2rem;
-    color: #2c516e;
+  }
+
+  .card-header h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 0.25rem 0;
+    letter-spacing: -0.02em;
+  }
+
+  .card-header p {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 0.9rem;
   }
 
   .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
   }
 
   label {
     display: block;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     font-weight: 500;
-    color: #374151;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
   }
 
   input {
     width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 1rem;
-    box-sizing: border-box;
+    padding: 0.7rem 0.9rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none;
+  }
+
+  input::placeholder {
+    color: var(--text-muted);
   }
 
   input:focus {
-    outline: none;
-    border-color: #2c516e;
-    box-shadow: 0 0 0 2px rgba(44, 81, 110, 0.2);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-muted);
   }
 
   input:disabled {
-    background-color: #f3f4f6;
+    opacity: 0.5;
     cursor: not-allowed;
   }
 
   .login-btn {
     width: 100%;
     padding: 0.75rem;
-    background-color: #2c516e;
-    color: white;
+    margin-top: 0.5rem;
+    background: var(--accent);
+    color: #0b1120;
     border: none;
-    border-radius: 6px;
-    font-size: 1rem;
-    font-weight: 500;
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
   }
 
   .login-btn:hover:not(:disabled) {
-    background-color: #1e3a52;
+    background: var(--accent-hover);
   }
 
   .login-btn:disabled {
-    background-color: #9ca3af;
+    opacity: 0.6;
     cursor: not-allowed;
   }
 
-  .error {
-    background-color: #fee2e2;
-    color: #dc2626;
-    padding: 0.75rem;
-    border-radius: 6px;
+  .error-msg {
+    background: var(--error-muted);
+    color: var(--error);
+    padding: 0.65rem 0.9rem;
+    border-radius: var(--radius-sm);
     margin-bottom: 1rem;
-    text-align: center;
+    font-size: 0.875rem;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(11, 17, 32, 0.3);
+    border-top-color: #0b1120;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 </style>

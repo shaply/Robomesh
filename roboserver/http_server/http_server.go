@@ -4,59 +4,56 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
+	"roboserver/comms"
+	"roboserver/database"
 	"roboserver/http_server/http_events"
 	"roboserver/shared"
-	"roboserver/shared/event_bus"
-	"roboserver/shared/robot_manager"
 
 	"github.com/go-chi/chi/v5"
 )
 
 type HTTPServer_t struct {
-	rm         robot_manager.RobotManager
-	eb         event_bus.EventBus
+	bus        comms.Bus
+	db         database.DBManager
 	router     *chi.Mux
 	srv        *http.Server
-	sseManager *http_events.EventsManager_t // Server-Sent Events manager for handling SSE connections
+	sseManager *http_events.EventsManager_t
 }
 
-func Start(ctx context.Context, rm robot_manager.RobotManager, eb event_bus.EventBus) error {
+func Start(ctx context.Context, bus comms.Bus, db database.DBManager) error {
 	r := chi.NewRouter()
 
-	// Get port
-	port := os.Getenv("HTTP_PORT")
-	if port == "" {
-		shared.DebugPanic("HTTP_PORT environment variable is not set")
-	}
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", port),
+		Addr:    fmt.Sprintf(":%d", shared.AppConfig.Server.HTTPPort),
 		Handler: r,
 	}
 	defer srv.Shutdown(ctx)
 
 	s := &HTTPServer_t{
-		rm:         rm,
-		eb:         eb,
+		bus:        bus,
+		db:         db,
 		router:     r,
 		srv:        srv,
-		sseManager: http_events.NewEventsManager(eb), // Initialize Server-Sent Events manager
+		sseManager: http_events.NewEventsManager(bus),
 	}
 
 	serverErr := make(chan error, 1)
 	go func() {
-		// Global middleware (applies to all routes)
-		s.router.Use(s.LoggingMiddleware) // Log all requests
-		s.router.Use(s.CORSMiddleware)    // Handle CORS for cross-origin requests
+		// Global middleware
+		s.router.Use(s.LoggingMiddleware)
+		s.router.Use(s.CORSMiddleware)
 
-		// Public routes (no authentication required)
+		// Public routes
 		s.router.Route("/auth", s.AuthRoutes)
 
-		// Protected routes (require authentication)
+		// Protected routes
 		s.router.Group(func(r chi.Router) {
-			r.Use(s.SessionValidationMiddleware) // Apply session validation to this group
+			r.Use(s.SessionValidationMiddleware)
 			r.Route("/robot", s.RobotRoutes)
 			r.Route("/events", s.EventRoutes)
+			r.Route("/provision", s.ProvisionRoutes)
+			r.Route("/ephemeral", s.EphemeralRoutes)
+			r.Route("/register", s.RegisterRoutes)
 		})
 
 		shared.DebugPrint("Starting HTTP server on %s", s.srv.Addr)
@@ -82,25 +79,22 @@ func Start(ctx context.Context, rm robot_manager.RobotManager, eb event_bus.Even
 // SessionValidationMiddleware validates session for protected routes
 func (s *HTTPServer_t) SessionValidationMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Get session from request (cookie, header, etc.)
 		session := GetSessionFromRequest(r)
 		if session == nil {
 			http.Error(w, "Unauthorized: No session found", http.StatusUnauthorized)
 			return
 		}
 
-		// Validate the session
 		if err := ValidateSession(session); err != nil {
 			http.Error(w, "Unauthorized: Invalid session", http.StatusUnauthorized)
 			return
 		}
 
-		// Session is valid, continue to next handler
 		next.ServeHTTP(w, r)
 	})
 }
 
-// Optional: Logging middleware
+// LoggingMiddleware logs all requests
 func (s *HTTPServer_t) LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		shared.DebugPrint("%s %s from %s", r.Method, r.URL.Path, r.RemoteAddr)
@@ -113,27 +107,22 @@ func (s *HTTPServer_t) CORSMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
 
-		// When credentials are included, we must specify exact origins, never "*"
 		if origin != "" {
-			// Allow the specific requesting origin (for development)
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		} else {
-			// If no Origin header, assume same-origin request from frontend
 			w.Header().Set("Access-Control-Allow-Origin", "http://localhost:5173")
 		}
 
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
-		w.Header().Set("Access-Control-Max-Age", "86400") // Cache preflight for 24 hours
+		w.Header().Set("Access-Control-Max-Age", "86400")
 
-		// Handle preflight OPTIONS request
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
 
-		// Continue to next handler
 		next.ServeHTTP(w, r)
 	})
 }

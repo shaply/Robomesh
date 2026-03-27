@@ -1,12 +1,11 @@
-// terminal/commands.go
 package terminal
 
 import (
 	"context"
 	"fmt"
 	"net"
-	"roboserver/shared/event_bus"
-	"roboserver/shared/robot_manager"
+	"roboserver/comms"
+	"roboserver/database"
 )
 
 // CommandFunc represents a terminal command function
@@ -22,11 +21,11 @@ type CommandInfo struct {
 
 // CommandContext provides context for command execution
 type CommandContext struct {
-	Conn         net.Conn
-	RobotManager robot_manager.RobotManager
-	EventBus     event_bus.EventBus // Event bus for inter-component communication
-	Cancel       context.CancelFunc
-	Subscriber   *event_bus.Subscriber // Subscriber for event handling
+	Conn          net.Conn
+	DB            database.DBManager
+	Bus           comms.Bus
+	Cancel        context.CancelFunc
+	Subscriptions map[string]func() // event type → cancel
 }
 
 // CommandRegistry holds all registered commands

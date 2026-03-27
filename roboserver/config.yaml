@@ -1,0 +1,33 @@
+# Robomesh Server Configuration
+# Secrets (passwords, tokens) should ONLY be set via environment variables, never in this file.
+# Environment variables always take precedence over values defined here.
+
+server:
+  http_port: 8080
+  tcp_port: 5000
+  mqtt_port: 1883
+  terminal_port: 6000
+  debug: false
+
+database:
+  postgres:
+    host: localhost
+    port: 5432
+    user: robomesh
+    database: robomesh_db
+    ssl_mode: disable
+    max_open_conns: 10
+    max_idle_conns: 5
+    conn_max_lifetime: 1h
+  redis:
+    host: localhost
+    port: 6379
+    db: 0
+    session_ttl: 60s
+
+auth:
+  jwt_expiry: 3600
+  nonce_length: 32
+
+handlers:
+  base_path: ./handlers

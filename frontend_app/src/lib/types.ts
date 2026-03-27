@@ -12,3 +12,28 @@ export interface RegisteringRobotEvent {
   ip?: string;
   robot_type: string;
 }
+
+export interface RegisteredRobot {
+  UUID: string;
+  PublicKey: string;
+  DeviceType: string;
+  IsBlacklisted: boolean;
+  CreatedAt: string;
+}
+
+export interface ActiveRobot {
+  uuid: string;
+  ip: string;
+  device_type: string;
+  session_jwt: string;
+  pid: number;
+  connected_at: number;
+}
+
+export interface PendingRobot {
+  uuid: string;
+  ip: string;
+  device_type: string;
+  public_key: string;
+  requested_at: number;
+}

@@ -2,18 +2,18 @@ package http_events
 
 import (
 	"net/http"
+	"roboserver/comms"
 	"roboserver/shared/data_structures"
-	"roboserver/shared/event_bus"
 )
 
 type EventsManager_t struct {
-	eb      event_bus.EventBus
+	bus     comms.Bus
 	clients *data_structures.SafeMap[EventSession, *EventsClient]
 }
 
-func NewEventsManager(eb event_bus.EventBus) *EventsManager_t {
+func NewEventsManager(bus comms.Bus) *EventsManager_t {
 	return &EventsManager_t{
-		eb:      eb,
+		bus:     bus,
 		clients: data_structures.NewSafeMap[EventSession, *EventsClient](),
 	}
 }

@@ -6,7 +6,6 @@
   export let showTitle: boolean = true;
   export const btn_quickAction_label: string = "Quick";
   export const btn_quickAction: (params: any) => void = (params) => {
-    // Default implementation (can be overridden)
     console.log("Quick action triggered with params:", params);
   };
 
@@ -14,149 +13,188 @@
     goto("/robots/" + robot.device_id);
   };
 
-  // Helper function to get status color
   function getStatusColor(status: string): string {
     switch (status.toLowerCase()) {
       case "online":
       case "active":
-        return "#22c55e"; // green
+        return "var(--success)";
       case "offline":
       case "inactive":
-        return "#ef4444"; // red
+        return "var(--error)";
       case "maintenance":
       case "warning":
-        return "#f59e0b"; // amber
+        return "var(--warning)";
       default:
-        return "#6b7280"; // gray
+        return "var(--text-muted)";
+    }
+  }
+
+  function getStatusBg(status: string): string {
+    switch (status.toLowerCase()) {
+      case "online":
+      case "active":
+        return "var(--success-muted)";
+      case "offline":
+      case "inactive":
+        return "var(--error-muted)";
+      case "maintenance":
+      case "warning":
+        return "var(--warning-muted)";
+      default:
+        return "var(--bg-hover)";
     }
   }
 </script>
 
-<div class="robot-card">
-  {#if showTitle}
-    <h2 class="robot-name">{robot.name}</h2>
-  {/if}
-
-  <div class="robot-info">
-    <ul class="robot-attributes">
-      <li><strong>ID:</strong> {robot.device_id}</li>
-      <li><strong>IP Address:</strong> {robot.ip}</li>
-      <li><strong>Robot Type:</strong> {robot.robot_type}</li>
-      <li>
-        <strong>Status:</strong>
-        <span
-          class="status-badge"
-          style="background-color: {getStatusColor(robot.status)}"
-          >{robot.status}</span
-        >
-      </li>
-      <li><strong>Last Seen:</strong> {robot.last_seen ? new Date(robot.last_seen * 1000).toLocaleString() : 'Unknown'}</li>
-    </ul>
+<div class="card">
+  <div class="card-top">
+    {#if showTitle}
+      <h3 class="card-name">{robot.name}</h3>
+    {/if}
+    <span
+      class="status-pill"
+      style="color: {getStatusColor(robot.status)}; background: {getStatusBg(robot.status)};"
+    >
+      <span class="status-dot" style="background: {getStatusColor(robot.status)};"></span>
+      {robot.status}
+    </span>
   </div>
 
-  <!-- Optional slot for additional content -->
-  <div class="robot-actions">
-    <button on:click={() => btn_quickAction(robot)}>{btn_quickAction_label}</button>
-    <button on:click={btn_moreActions}>More</button>
+  <div class="card-details">
+    <div class="detail-row">
+      <span class="detail-label">ID</span>
+      <span class="detail-value mono">{robot.device_id}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">IP</span>
+      <span class="detail-value mono">{robot.ip}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Type</span>
+      <span class="detail-value">{robot.robot_type}</span>
+    </div>
+    <div class="detail-row">
+      <span class="detail-label">Last seen</span>
+      <span class="detail-value">{robot.last_seen ? new Date(robot.last_seen * 1000).toLocaleString() : 'Unknown'}</span>
+    </div>
+  </div>
+
+  <div class="card-actions">
+    <button class="btn-quick" on:click={() => btn_quickAction(robot)}>{btn_quickAction_label}</button>
+    <button class="btn-more" on:click={btn_moreActions}>Details</button>
   </div>
 </div>
 
 <style>
-  .robot-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 20px;
-    margin: 16px 0;
-    background: white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: box-shadow 0.2s ease;
-    width: fit-content;
-    min-width: 280px;
-    max-width: 400px;
+  .card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    transition: border-color 0.15s, box-shadow 0.15s;
   }
 
-  .robot-card:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  .card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent-muted);
   }
 
-  .robot-name {
-    font-size: 1.5rem;
-    font-weight: 600;
-    margin-bottom: 16px;
-    color: #1f2937;
-    border-bottom: 2px solid #f3f4f6;
-    padding-bottom: 8px;
-  }
-
-  .robot-info {
-    margin-bottom: 16px;
-  }
-
-  .robot-attributes {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .robot-attributes li {
-    padding: 8px 0;
+  .card-top {
     display: flex;
     align-items: center;
-    border-bottom: 1px solid #f9fafb;
+    justify-content: space-between;
+    margin-bottom: 1rem;
   }
 
-  .robot-attributes li:last-child {
-    border-bottom: none;
+  .card-name {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    letter-spacing: -0.01em;
   }
 
-  .robot-attributes strong {
-    color: #374151;
-    min-width: 100px;
-    margin-right: 8px;
-  }
-
-  .status-badge {
-    display: inline-block;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.875rem;
-    font-weight: 500;
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
     text-transform: capitalize;
   }
 
-  .robot-actions {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid #f3f4f6;
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .card-details {
     display: flex;
-    gap: 8px;
-    justify-content: center;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.15rem;
   }
 
-  .robot-actions button {
-    flex: 1;
-    padding: 8px 16px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    background-color: #f9fafb;
-    color: #374151;
-    cursor: pointer;
+  .detail-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.85rem;
+  }
+
+  .detail-label {
+    color: var(--text-muted);
     font-weight: 500;
-    transition: background-color 0.2s ease;
   }
 
-  .robot-actions button:hover {
-    background-color: #e5e7eb;
+  .detail-value {
+    color: var(--text-secondary);
   }
 
-  .robot-actions button:first-child {
-    background-color: #3b82f6;
-    color: white;
-    border-color: #2563eb;
+  .detail-value.mono {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
   }
 
-  .robot-actions button:first-child:hover {
-    background-color: #2563eb;
+  .card-actions {
+    display: flex;
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .card-actions button {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.12s;
+    border: none;
+  }
+
+  .btn-quick {
+    background: var(--accent);
+    color: #0b1120;
+  }
+
+  .btn-quick:hover {
+    background: var(--accent-hover);
+  }
+
+  .btn-more {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    border: 1px solid var(--border) !important;
+  }
+
+  .btn-more:hover {
+    background: var(--border);
+    color: var(--text-primary);
   }
 </style>

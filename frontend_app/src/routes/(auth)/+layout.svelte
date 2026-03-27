@@ -3,67 +3,74 @@
 </script>
 
 <main class="auth-layout">
-  <nav class="navbar">
-    <div class="container">
-      <a href="/login" class="logo">Robot Dashboard</a>
-      <ul class="nav-links">
-        <li><a href="/login">Login</a></li>
-      </ul>
-    </div>
+  <nav class="auth-nav">
+    <a href="/login" class="auth-logo">
+      <span class="logo-icon">R</span>
+      <span class="logo-text">Robomesh</span>
+    </a>
   </nav>
   <div class="auth-content">
     {@render children()}
   </div>
+  <footer class="auth-footer">
+    <span>Robomesh &mdash; Autonomous Robot Management</span>
+  </footer>
 </main>
 
 <style>
   .auth-layout {
-    font-family: 'Roboto', sans-serif;
-    background-color: #DDEBF2;
     min-height: 100vh;
-  }
-
-  .navbar {
-    background-color: #2C516E;
-    color: white;
-    padding: 1.5rem 2.5rem;
-  }
-
-  .navbar .container {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(56, 189, 248, 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(56, 189, 248, 0.04) 0%, transparent 50%),
+      var(--bg-base);
+  }
+
+  .auth-nav {
+    padding: 1.5rem 2rem;
+  }
+
+  .auth-logo {
+    display: inline-flex;
     align-items: center;
-  }
-
-  .navbar .logo {
-    font-size: 1.5rem;
-    font-weight: bold;
+    gap: 0.75rem;
     text-decoration: none;
-    color: white;
   }
 
-  .navbar .nav-links {
-    list-style: none;
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent), #0284c7);
+    border-radius: 8px;
     display: flex;
-    gap: 1rem;
-    margin: 0;
-    padding: 0;
-  }
-
-  .navbar .nav-links li a {
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
     color: white;
-    text-decoration: none;
   }
 
-  .navbar .nav-links li a:hover {
-    text-decoration: underline;
+  .logo-text {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
   }
 
   .auth-content {
-    padding: 2rem;
+    flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: calc(100vh - 120px);
+    padding: 2rem;
+  }
+
+  .auth-footer {
+    padding: 1.5rem 2rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.8rem;
   }
 </style>

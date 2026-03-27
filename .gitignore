@@ -2,6 +2,7 @@ ssh/
 
 .vscode/
 
+.env
 .env/
 .venv/
 venv/
@@ -9,3 +10,24 @@ venv/
 __pycache__/
 
 .pio/
+
+personal/
+
+# OS
+.DS_Store
+
+# Docker
+postgres_data/
+redis_data/
+
+# Build artifacts
+roboserver/build/
+frontend_app/build/
+frontend_app/node_modules/
+
+# Handler test keys
+handlers/example_robot/private_key.hex
+handlers/example_robot/public_key.hex
+
+# dbmate
+db/schema.sql

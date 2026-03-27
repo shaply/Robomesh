@@ -1,7 +1,11 @@
 package database
 
+import "context"
+
+// DBManager provides access to all database backends.
 type DBManager interface {
-	GetMongoDB() *MongodbHandler
+	Postgres() *PostgresHandler
+	Redis() *RedisHandler
 	Stop()
-	IsHealthy() bool
+	IsHealthy(ctx context.Context) bool
 }
