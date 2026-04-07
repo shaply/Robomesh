@@ -1,19 +1,17 @@
 import type { SvelteComponent } from 'svelte';
+import { loadPluginComponent } from './plugin-loader.js';
 
-// Import all robot type components
+// Built-in default component
 import DefaultRobotComponent from './components/DefaultRobotComponent.svelte';
-// TODO: Import your robot components here
-// import DroneComponent from './components/DroneComponent.svelte';
-// import VacuumComponent from './components/VacuumComponent.svelte';
-// import ArmComponent from './components/ArmComponent.svelte';
 
 export type RobotComponent = any; // Using any for Svelte 5 compatibility
 
 export interface RobotTypeConfig {
   component: RobotComponent;
+  handlerComponent?: RobotComponent;
   displayName: string;
   description?: string;
-  icon?: string; // Icon class or emoji
+  icon?: string;
   capabilities?: {
     realTimeControl?: boolean;
     diagnostics?: boolean;
@@ -21,14 +19,15 @@ export interface RobotTypeConfig {
     logs?: boolean;
     camera?: boolean;
   };
-  // Default actions this robot type supports
   defaultActions?: string[];
+  isPlugin?: boolean;
 }
 
 // ========================================
-// 🤖 ROBOT TYPE REGISTRY
+// ROBOT TYPE REGISTRY
 // ========================================
-// Add new robot types here when you create them!
+// Built-in types are registered here.
+// Plugin types are loaded dynamically at runtime from the backend.
 
 export const robotTypeRegistry: Record<string, RobotTypeConfig> = {
   'default': {
@@ -44,73 +43,65 @@ export const robotTypeRegistry: Record<string, RobotTypeConfig> = {
     },
     defaultActions: ['start', 'stop', 'reset']
   },
-  
-  // TODO: Add your robot types here!
-  // 'drone': {
-  //   component: DroneComponent,
-  //   displayName: 'Aerial Drone',
-  //   description: 'Flying robot with camera and GPS',
-  //   icon: '🚁',
-  //   capabilities: {
-  //     realTimeControl: true,
-  //     camera: true,
-  //     diagnostics: true
-  //   },
-  //   defaultActions: ['takeoff', 'land', 'hover', 'return-home']
-  // },
-  
-  // 'vacuum': {
-  //   component: VacuumComponent,
-  //   displayName: 'Vacuum Robot',
-  //   description: 'Autonomous cleaning robot',
-  //   icon: '🧹',
-  //   capabilities: {
-  //     realTimeControl: true,
-  //     diagnostics: true,
-  //     configuration: true
-  //   },
-  //   defaultActions: ['start-cleaning', 'pause', 'dock', 'spot-clean']
-  // },
-  
-  // 'arm': {
-  //   component: ArmComponent,
-  //   displayName: 'Robotic Arm',
-  //   description: 'Multi-axis manipulator arm',
-  //   icon: '🦾',
-  //   capabilities: {
-  //     realTimeControl: true,
-  //     diagnostics: true,
-  //     configuration: true
-  //   },
-  //   defaultActions: ['home', 'calibrate', 'emergency-stop']
-  // }
 };
 
 // ========================================
-// 🛠️ HELPER FUNCTIONS
+// HELPER FUNCTIONS
 // ========================================
 
 /**
- * Get robot component configuration by type
+ * Get robot component configuration by type.
+ * For built-in types, returns immediately.
+ * For dynamic plugin types, use getRobotComponentAsync.
  */
 export function getRobotComponent(robotType: string): RobotTypeConfig {
   const config = robotTypeRegistry[robotType];
   if (!config) {
-    console.warn(`Unknown robot type: ${robotType}, using default`);
     return robotTypeRegistry['default'];
   }
   return config;
 }
 
 /**
- * Get all registered robot types
+ * Async version that attempts to load dynamic plugin components.
+ * Falls back to built-in registry, then to default.
+ */
+export async function getRobotComponentAsync(robotType: string): Promise<RobotTypeConfig> {
+  // Check built-in registry first
+  if (robotTypeRegistry[robotType]) {
+    return robotTypeRegistry[robotType];
+  }
+
+  // Try loading from plugin system
+  const cardComponent = await loadPluginComponent(robotType, 'robot_card');
+  const handlerComponent = await loadPluginComponent(robotType, 'robot_handler');
+
+  if (cardComponent || handlerComponent) {
+    const config: RobotTypeConfig = {
+      component: cardComponent || DefaultRobotComponent,
+      handlerComponent: handlerComponent || undefined,
+      displayName: robotType.charAt(0).toUpperCase() + robotType.slice(1).replace(/_/g, ' '),
+      description: `Dynamically loaded ${robotType} handler`,
+      isPlugin: true,
+    };
+
+    // Cache in registry for future sync access
+    robotTypeRegistry[robotType] = config;
+    return config;
+  }
+
+  return robotTypeRegistry['default'];
+}
+
+/**
+ * Get all registered robot types (built-in only; plugins are loaded on demand).
  */
 export function getAvailableRobotTypes(): string[] {
   return Object.keys(robotTypeRegistry);
 }
 
 /**
- * Get robot types that support a specific capability
+ * Get robot types that support a specific capability.
  */
 export function getRobotTypesByCapability(capability: keyof RobotTypeConfig['capabilities']): string[] {
   return Object.entries(robotTypeRegistry)
@@ -119,10 +110,10 @@ export function getRobotTypesByCapability(capability: keyof RobotTypeConfig['cap
 }
 
 /**
- * Check if a robot type supports a specific capability
+ * Check if a robot type supports a specific capability.
  */
 export function robotSupportsCapability(
-  robotType: string, 
+  robotType: string,
   capability: keyof RobotTypeConfig['capabilities']
 ): boolean {
   const config = getRobotComponent(robotType);

@@ -1,17 +1,50 @@
 <script lang="ts">
   import type { BaseRobot } from "$lib/types.js";
   import { goto } from "$app/navigation";
+  import { getHandlerStatus, startHandler, killHandler } from "$lib/backend/get_robots.js";
+  import { onMount } from "svelte";
 
-  export let robot: BaseRobot;
-  export let showTitle: boolean = true;
-  export const btn_quickAction_label: string = "Quick";
-  export const btn_quickAction: (params: any) => void = (params) => {
-    console.log("Quick action triggered with params:", params);
-  };
+  let {
+    robot,
+    showTitle = true,
+  }: {
+    robot: BaseRobot;
+    showTitle?: boolean;
+  } = $props();
+
+  let handlerActive = $state(false);
+  let handlerLoading = $state(false);
 
   const btn_moreActions: () => void = () => {
     goto("/robots/" + robot.device_id);
   };
+
+  onMount(async () => {
+    try {
+      const status = await getHandlerStatus(robot.device_id);
+      if (status) {
+        handlerActive = status.active;
+      }
+    } catch (e) {
+      console.error('Failed to fetch handler status:', e);
+    }
+  });
+
+  async function toggleHandler() {
+    if (handlerLoading) return;
+    handlerLoading = true;
+    try {
+      if (handlerActive) {
+        const ok = await killHandler(robot.device_id);
+        if (ok) handlerActive = false;
+      } else {
+        const ok = await startHandler(robot.device_id);
+        if (ok) handlerActive = true;
+      }
+    } finally {
+      handlerLoading = false;
+    }
+  }
 
   function getStatusColor(status: string): string {
     switch (status.toLowerCase()) {
@@ -51,13 +84,22 @@
     {#if showTitle}
       <h3 class="card-name">{robot.name}</h3>
     {/if}
-    <span
-      class="status-pill"
-      style="color: {getStatusColor(robot.status)}; background: {getStatusBg(robot.status)};"
-    >
-      <span class="status-dot" style="background: {getStatusColor(robot.status)};"></span>
-      {robot.status}
-    </span>
+    <div class="status-pills">
+      <span
+        class="status-pill"
+        style="color: {getStatusColor(robot.status)}; background: {getStatusBg(robot.status)};"
+      >
+        <span class="status-dot" style="background: {getStatusColor(robot.status)};"></span>
+        {robot.status}
+      </span>
+      <span
+        class="status-pill"
+        style="color: {handlerActive ? 'var(--success)' : 'var(--text-muted)'}; background: {handlerActive ? 'var(--success-muted)' : 'var(--bg-hover)'};"
+      >
+        <span class="status-dot" style="background: {handlerActive ? 'var(--success)' : 'var(--text-muted)'};"></span>
+        Handler {handlerActive ? 'on' : 'off'}
+      </span>
+    </div>
   </div>
 
   <div class="card-details">
@@ -80,8 +122,15 @@
   </div>
 
   <div class="card-actions">
-    <button class="btn-quick" on:click={() => btn_quickAction(robot)}>{btn_quickAction_label}</button>
-    <button class="btn-more" on:click={btn_moreActions}>Details</button>
+    <button
+      class="btn-handler"
+      class:btn-handler-active={handlerActive}
+      onclick={toggleHandler}
+      disabled={handlerLoading}
+    >
+      {handlerLoading ? '...' : handlerActive ? 'Kill Handler' : 'Start Handler'}
+    </button>
+    <button class="btn-more" onclick={btn_moreActions}>Details</button>
   </div>
 </div>
 
@@ -104,6 +153,7 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 1rem;
+    gap: 0.5rem;
   }
 
   .card-name {
@@ -112,6 +162,12 @@
     color: var(--text-primary);
     margin: 0;
     letter-spacing: -0.01em;
+  }
+
+  .status-pills {
+    display: flex;
+    gap: 0.35rem;
+    flex-shrink: 0;
   }
 
   .status-pill {
@@ -123,6 +179,7 @@
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: capitalize;
+    white-space: nowrap;
   }
 
   .status-dot {
@@ -178,13 +235,28 @@
     border: none;
   }
 
-  .btn-quick {
+  .card-actions button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .btn-handler {
     background: var(--accent);
     color: #0b1120;
   }
 
-  .btn-quick:hover {
+  .btn-handler:hover:not(:disabled) {
     background: var(--accent-hover);
+  }
+
+  .btn-handler-active {
+    background: var(--error-muted, #3b1a1a);
+    color: var(--error, #ef4444);
+  }
+
+  .btn-handler-active:hover:not(:disabled) {
+    background: var(--error, #ef4444);
+    color: white;
   }
 
   .btn-more {
@@ -196,5 +268,26 @@
   .btn-more:hover {
     background: var(--border);
     color: var(--text-primary);
+  }
+
+  @media (max-width: 480px) {
+    .card-top {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .status-pills {
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    .detail-value.mono {
+      font-size: 0.72rem;
+      word-break: break-all;
+    }
+
+    .card-actions {
+      flex-direction: column;
+    }
   }
 </style>

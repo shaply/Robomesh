@@ -62,6 +62,14 @@ func handleConnection(ctx context.Context, conn net.Conn, bus comms.Bus, db data
 		Subscriptions: make(map[string]func()),
 	}
 
+	// Ensure all event subscriptions are cancelled when the connection closes
+	defer func() {
+		for topic, cancelFn := range cmdCtx.Subscriptions {
+			cancelFn()
+			delete(cmdCtx.Subscriptions, topic)
+		}
+	}()
+
 	conn.Write([]byte("=== Robomesh Terminal ===\n"))
 	conn.Write([]byte("Type 'help' for available commands.\n"))
 	conn.Write([]byte("> "))

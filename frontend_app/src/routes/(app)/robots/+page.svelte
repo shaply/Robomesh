@@ -177,4 +177,27 @@
   @keyframes spin {
     to { transform: rotate(360deg); }
   }
+
+  @media (max-width: 768px) {
+    .toolbar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .search-area {
+      max-width: none;
+    }
+
+    .toolbar-actions {
+      justify-content: flex-end;
+    }
+
+    .cards-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .cards-area {
+      padding: 0.75rem;
+    }
+  }
 </style>

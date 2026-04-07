@@ -53,6 +53,7 @@ func (h *HTTPServer_t) provisionRobot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"status": "provisioned", "uuid": req.UUID})
 }
@@ -98,6 +99,7 @@ func (h *HTTPServer_t) blacklistRobot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{"uuid": uuid, "blacklisted": req.Blacklisted})
 }
 

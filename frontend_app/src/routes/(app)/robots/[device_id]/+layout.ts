@@ -6,8 +6,8 @@ export async function load({ params }) {
     const { device_id } = params;
 
     if (browser) {
-        // Validate device_id format (e.g., alphanumeric)
-        if (!device_id || !/^[0-9a-zA-Z]+$/.test(device_id)) {
+        // Validate device_id format (alphanumeric, dashes, underscores)
+        if (!device_id || !/^[0-9a-zA-Z_-]+$/.test(device_id)) {
             error(400, 'Invalid device ID format');
         }
 

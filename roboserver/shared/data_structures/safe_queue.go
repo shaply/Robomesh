@@ -121,6 +121,7 @@ func (q *SafeQueue[T]) Close() error {
 	utils.SafeCloseChannel(q.done)
 	utils.SafeCloseChannel(q.nextCh)
 	utils.SafeCloseChannel(q.notifyCh)
+	utils.SafeCloseChannel(q.readValCh)
 	return nil
 }
 

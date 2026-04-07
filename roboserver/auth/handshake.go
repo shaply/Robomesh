@@ -29,11 +29,12 @@ type HandshakeResult struct {
 //  6. Server issues a session JWT and registers in Redis
 func PerformHandshake(ctx context.Context, conn net.Conn, db *database.PostgresHandler, rds *database.RedisHandler) (*HandshakeResult, error) {
 	scanner := bufio.NewScanner(conn)
+	scanner.Buffer(make([]byte, 0, bufio.MaxScanTokenSize), 64*1024)
 	ip := conn.RemoteAddr().(*net.TCPAddr).IP.String()
 
 	// Step 1: Receive UUID
 	conn.Write([]byte("AUTH_CHALLENGE\n"))
-	conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+	conn.SetReadDeadline(time.Now().Add(shared.AppConfig.Timeouts.HandshakeTimeout()))
 	if !scanner.Scan() {
 		return nil, fmt.Errorf("failed to read UUID: %w", scanner.Err())
 	}
@@ -63,7 +64,7 @@ func PerformHandshake(ctx context.Context, conn net.Conn, db *database.PostgresH
 	conn.Write([]byte(fmt.Sprintf("NONCE %s\n", nonce)))
 
 	// Step 4: Receive signature
-	conn.SetReadDeadline(time.Now().Add(30 * time.Second))
+	conn.SetReadDeadline(time.Now().Add(shared.AppConfig.Timeouts.HandshakeTimeout()))
 	if !scanner.Scan() {
 		return nil, fmt.Errorf("failed to read signature: %w", scanner.Err())
 	}
@@ -101,7 +102,7 @@ func PerformHandshake(ctx context.Context, conn net.Conn, db *database.PostgresH
 	}
 
 	conn.Write([]byte(fmt.Sprintf("AUTH_OK %s\n", jwt)))
-	shared.DebugPrint("Robot %s authenticated successfully from %s", uuid, ip)
+	shared.DebugPrint("Robot %s authenticated successfully from %s", uuid, shared.RedactIP(ip))
 
 	return &HandshakeResult{
 		UUID:       uuid,

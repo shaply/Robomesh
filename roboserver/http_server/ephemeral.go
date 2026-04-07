@@ -46,6 +46,20 @@ func (h *HTTPServer_t) createEphemeralSession(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// Check if UUID already has an active session
+	if existing, _ := rds.GetActiveRobot(r.Context(), req.UUID); existing != nil {
+		http.Error(w, "UUID already has an active session", http.StatusConflict)
+		return
+	}
+
+	// Check if UUID is already registered in PostgreSQL
+	if pg := h.db.Postgres(); pg != nil {
+		if robot, _ := pg.GetRobotByUUID(r.Context(), req.UUID); robot != nil {
+			http.Error(w, "UUID belongs to a registered robot", http.StatusConflict)
+			return
+		}
+	}
+
 	sessionID := auth.GenerateSessionID()
 	jwt, err := auth.IssueSessionJWT(req.UUID, req.DeviceType, req.IP, sessionID)
 	if err != nil {
@@ -92,5 +106,6 @@ func (h *HTTPServer_t) deleteEphemeralSession(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "removed", "uuid": uuid})
 }

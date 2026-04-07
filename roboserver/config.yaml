@@ -31,3 +31,19 @@ auth:
 
 handlers:
   base_path: ./handlers
+
+timeouts:
+  handshake: 30s
+  process_kill: 10s
+  reverse_connect: 10s
+
+# TLS — uncomment and set env vars TLS_CERT_FILE / TLS_KEY_FILE to enable
+# tls:
+#   enabled: false
+#   cert_file: ""
+#   key_file: ""
+
+# CORS — override with ALLOWED_ORIGINS env var (comma-separated)
+# allowed_origins:
+#   - http://localhost:5173
+#   - http://localhost:4173

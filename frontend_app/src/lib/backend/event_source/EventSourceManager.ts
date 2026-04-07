@@ -1,6 +1,6 @@
 import { browser } from '$app/environment';
 import { PUBLIC_BACKEND_IP, PUBLIC_BACKEND_PORT } from '$env/static/public';
-import { API_AUTH_TOKEN, SSE_SESSION_ID_EVENT } from '$lib/const.js';
+import { SSE_SESSION_ID_EVENT } from '$lib/const.js';
 import { fetchBackend } from '../fetch.js';
 import type { EventMap, EventHandler, EventData, SentEvent } from './types.js';
 
@@ -100,63 +100,92 @@ class EventSourceManager {
     }
 
     private async _processQueue() {
-        let op: 'subscribe' | 'unsubscribe' = 'subscribe';
+        let op: 'subscribe' | 'unsubscribe' | null = null;
         let list: string[] = [];
 
-        console.log('Processing operation queue:', this.operationQueue);
+        if (import.meta.env.DEV) console.log('Processing operation queue:', this.operationQueue);
 
-        while (this.operationQueue.length >= 0) {
+        while (this.operationQueue.length > 0) {
             const operation = this.operationQueue.shift();
-            if (!operation || op !== operation.type) {
+            if (!operation) break;
+
+            // Flush the current batch if the operation type changed
+            if (op !== null && op !== operation.type) {
                 if (list.length > 0) {
                     const response = await fetchBackend(`/events/${op}`, {
                         method: 'POST',
-                        body: JSON.stringify({ 
+                        body: JSON.stringify({
                             event_types: list,
                             event_session: this.eSess
                         }),
                         headers: {
                             'Content-Type': 'application/json'
                         }
-                    })
+                    });
                     if (!response.ok) {
                         this.connReset();
                         console.error(`Failed to ${op} events:`, response.statusText, await response.text());
                         throw new Error(`Failed to ${op} events: ${response.statusText}`);
                     }
+                    list = [];
                 }
-    
-
-                op = op === 'subscribe' ? 'unsubscribe' : 'subscribe';
             }
 
-            if (!operation) break;
+            op = operation.type;
             list.push(operation.eventType);
         }
+
+        // Flush remaining batch
+        if (op !== null && list.length > 0) {
+            const response = await fetchBackend(`/events/${op}`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    event_types: list,
+                    event_session: this.eSess
+                }),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                this.connReset();
+                console.error(`Failed to ${op} events:`, response.statusText, await response.text());
+                throw new Error(`Failed to ${op} events: ${response.statusText}`);
+            }
+        }
+
         this.isProcessingQueue = false;
     }
 
-    connect(): void {
+    async connect(): Promise<void> {
         if (!browser || this.isConnected() || this.isConnecting) return;
 
         this.isConnecting = true;
 
-        // Get auth token
-        const authToken = localStorage.getItem(`${API_AUTH_TOKEN}`);
-        if (!authToken) {
-            console.error('No auth token found for EventSource');
+        // Request a short-lived single-use ticket instead of putting the JWT in the URL
+        let ticket: string;
+        try {
+            const ticketRes = await fetchBackend('/auth/ticket', { method: 'POST' });
+            if (!ticketRes.ok) {
+                console.error('Failed to obtain SSE ticket');
+                this.isConnecting = false;
+                return;
+            }
+            const ticketData = await ticketRes.json();
+            ticket = ticketData.ticket;
+        } catch (e) {
+            console.error('Failed to fetch SSE ticket:', e);
             this.isConnecting = false;
             return;
         }
 
-        // Build URL with subscribed events
+        // Build URL with subscribed events and single-use ticket
         const eventTypes = Array.from(this.eventMap.keys());
         const eventParam = `events=${eventTypes.map(event => encodeURIComponent(event)).join(',')}`;
-        const tokenParam = `${API_AUTH_TOKEN}=${encodeURIComponent(authToken)}`;
-        const url = `/events?${eventParam}&${tokenParam}`;
+        const url = `/events?${eventParam}&ticket=${encodeURIComponent(ticket)}`;
         const fullUrl = `http://${PUBLIC_BACKEND_IP}:${PUBLIC_BACKEND_PORT}${url}`;
 
-        console.log('Connecting EventSource with events:', eventTypes);
+        if (import.meta.env.DEV) console.log('Connecting EventSource with events:', eventTypes);
 
         this.eventSource = new EventSource(fullUrl, {
             withCredentials: true
@@ -168,13 +197,12 @@ class EventSourceManager {
         }
 
         this.eventSource.onmessage = (event) => {
-            console.log('Received message:', event);
-
+            if (import.meta.env.DEV) console.log('Received message:', event);
             this.handleEvent(event);
         };
 
         this.eventSource.onopen = () => {
-            console.log('EventSource connected');
+            if (import.meta.env.DEV) console.log('EventSource connected');
             this.isConnecting = false;
         };
 
@@ -193,7 +221,7 @@ class EventSourceManager {
         if (this.eventSource) {
             this.eventSource.close();
             this.eventSource = null;
-            console.log('EventSource disconnected');
+            if (import.meta.env.DEV) console.log('EventSource disconnected');
         }
         this.isConnecting = false;
     }
@@ -204,6 +232,12 @@ class EventSourceManager {
 
     getSubscribedEvents(): string[] {
         return Array.from(this.eventMap.keys());
+    }
+
+    // stripHtmlTags removes HTML tags from a string to prevent XSS when data
+    // is accidentally rendered as HTML (e.g., via {@html} in Svelte).
+    private static stripHtmlTags(str: string): string {
+        return str.replace(/<[^>]*>/g, '');
     }
 
     private handleEvent(event: MessageEvent): void {
@@ -218,9 +252,11 @@ class EventSourceManager {
             }
             const sentEvent = JSON.parse(decodedData) as SentEvent;
 
+            // Decode and sanitize event data — strip HTML tags to prevent XSS
+            const rawData = atob(sentEvent.encoded_data);
             const eventData: EventData = {
                 type: sentEvent.type,
-                data: atob(sentEvent.encoded_data),
+                data: EventSourceManager.stripHtmlTags(rawData),
                 timestamp: Date.now(),
                 id: sentEvent.id
             };
@@ -240,16 +276,16 @@ class EventSourceManager {
                 }
             });
 
-            console.log(`Received ${sentEvent.type}:`, eventData);
+            if (import.meta.env.DEV) console.log(`Received ${sentEvent.type}:`, eventData);
         } catch (error) {
             console.error(`Error parsing event:`, error);
         }
     }
 
     // Method to reconnect with updated subscriptions
-    reconnect(): void {
+    async reconnect(): Promise<void> {
         this.disconnect();
-        this.connect();
+        await this.connect();
     }
 
     private connReset(): void {
@@ -277,7 +313,7 @@ class EventSourceManager {
     private handleEsessEvent(event: EventData): void {
         const data = JSON.parse(event.data);
         this.eSess = data || null;
-        console.log('Received session ID:', this.eSess);
+        if (import.meta.env.DEV) console.log('Received session ID:', this.eSess);
 
         // Process any queued operations now that we have the session ID
         if (this.queueProcessPromise) {

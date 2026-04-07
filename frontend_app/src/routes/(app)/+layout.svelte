@@ -13,6 +13,7 @@
   import RegisteringRobotNotifComponent from '$lib/components/RegisteringRobotNotifComponent.svelte';
 
   let { children } = $props();
+  let warningTimeoutId: ReturnType<typeof setTimeout> | null = null;
 
   const navLinks = [
     { href: '/robots', label: 'Robots' },
@@ -51,7 +52,7 @@
     let warningNotificationId: string | null = null;
     let isResolved = false;
 
-    const warningTimeout = setTimeout(() => {
+    warningTimeoutId = setTimeout(() => {
       if (!isResolved) {
         warningNotificationId = notifyWarning(
           "Slow Connection",
@@ -67,7 +68,7 @@
       });
 
       isResolved = true;
-      clearTimeout(warningTimeout);
+      if (warningTimeoutId) clearTimeout(warningTimeoutId);
 
       if (warningNotificationId) {
         removeNotification(warningNotificationId);
@@ -83,7 +84,7 @@
       }
     } catch (error) {
       isResolved = true;
-      clearTimeout(warningTimeout);
+      if (warningTimeoutId) clearTimeout(warningTimeoutId);
 
       if (warningNotificationId) {
         removeNotification(warningNotificationId);
@@ -96,6 +97,8 @@
   });
 
   onDestroy(async () => {
+    if (warningTimeoutId) clearTimeout(warningTimeoutId);
+    eventSourceManager.unsubscribe("robot.registering", notify_registering_robot);
     eventSourceManager.disconnect();
   })
 </script>
@@ -120,7 +123,7 @@
     </div>
 
     <div class="sidebar-footer">
-      <a href="/login" class="nav-link logout-link">Logout</a>
+      <a href="/logout" class="nav-link logout-link">Logout</a>
     </div>
   </nav>
 
@@ -270,6 +273,30 @@
     .main-content {
       margin-left: 0;
       padding: 1.5rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .sidebar {
+      padding: 0.5rem 0.75rem;
+    }
+
+    .sidebar-links {
+      margin-left: 0.75rem;
+      gap: 0;
+    }
+
+    .nav-link {
+      padding: 0.4rem 0.5rem;
+      font-size: 0.82rem;
+    }
+
+    .logo-text {
+      display: none;
+    }
+
+    .main-content {
+      padding: 1rem;
     }
   }
 </style>

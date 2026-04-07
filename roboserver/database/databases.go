@@ -2,7 +2,10 @@ package database
 
 import (
 	"context"
+	"os"
 	"roboserver/shared"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type DBManager_t struct {
@@ -36,13 +39,10 @@ func Start(ctx context.Context) (DBManager, error) {
 	}
 	manager.redis = rds
 
-	shared.DebugPrint("All databases initialized successfully")
+	// Seed default admin user if not already present
+	seedDefaultUsers(dbCtx, rds)
 
-	go func() {
-		<-dbCtx.Done()
-		shared.DebugPrint("Database context cancelled, shutting down databases...")
-		manager.Stop()
-	}()
+	shared.DebugPrint("All databases initialized successfully")
 
 	return manager, nil
 }
@@ -72,4 +72,42 @@ func (dm *DBManager_t) IsHealthy(ctx context.Context) bool {
 		return false
 	}
 	return true
+}
+
+// seedDefaultUsers ensures the admin user exists in Redis.
+func seedDefaultUsers(ctx context.Context, rds *RedisHandler) {
+	if rds == nil {
+		return
+	}
+
+	// Check if admin already exists
+	if _, err := rds.GetUser(ctx, "admin"); err == nil {
+		shared.DebugPrint("Admin user already seeded")
+		return
+	}
+
+	password := os.Getenv("ADMIN_PASSWORD")
+	if password == "" {
+		password = "password1"
+		shared.DebugPrint("WARNING: Using default admin credentials (admin/password1). Set ADMIN_PASSWORD env var for production.")
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		shared.DebugPrint("Failed to hash default admin password: %v", err)
+		return
+	}
+
+	user := &User{
+		Username:     "admin",
+		PasswordHash: string(hash),
+	}
+	if err := rds.SetUser(ctx, user); err != nil {
+		shared.DebugPrint("Failed to seed admin user: %v", err)
+		return
+	}
+
+	if os.Getenv("ADMIN_PASSWORD") != "" {
+		shared.DebugPrint("Admin user seeded with password from ADMIN_PASSWORD env var")
+	}
 }

@@ -1,11 +1,13 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
-  import { getRegisteredRobots, provisionRobot, blacklistRobot } from "$lib/backend/get_robots.js";
-  import type { RegisteredRobot } from "$lib/types.js";
+  import { getRegisteredRobots, getPendingRobots, provisionRobot, blacklistRobot } from "$lib/backend/get_robots.js";
+  import { fetchBackend } from "$lib/backend/fetch.js";
+  import type { RegisteredRobot, PendingRobot } from "$lib/types.js";
   import { notifySuccess, notifyError } from "$lib/index.js";
   import PageButton from "$lib/components/page-button.svelte";
 
   let robots: RegisteredRobot[] = [];
+  let pendingRobots: PendingRobot[] = [];
   let loading = true;
   let error: string | null = null;
   let intervalId: number;
@@ -64,9 +66,46 @@
     }
   }
 
+  async function fetchPending() {
+    const result = await getPendingRobots();
+    if (result) pendingRobots = result;
+  }
+
+  async function respondToRegistration(uuid: string, accept: boolean) {
+    try {
+      const response = await fetchBackend('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uuid, accept }),
+      });
+      if (response.ok) {
+        notifySuccess(accept ? "Accepted" : "Rejected", `Robot ${uuid} ${accept ? 'accepted' : 'rejected'}`);
+        await fetchPending();
+        if (accept) await fetchRobots();
+      } else {
+        notifyError("Failed", `Could not ${accept ? 'accept' : 'reject'} robot`);
+      }
+    } catch {
+      notifyError("Failed", "Network error");
+    }
+  }
+
+  function fingerprint(key: string): string {
+    if (!key || key.length < 16) return key;
+    return key.slice(0, 8) + '...' + key.slice(-8);
+  }
+
+  function timeSince(unix: number): string {
+    const seconds = Math.floor(Date.now() / 1000 - unix);
+    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    return `${Math.floor(seconds / 3600)}h ago`;
+  }
+
   onMount(() => {
     fetchRobots();
-    intervalId = setInterval(fetchRobots, 30000);
+    fetchPending();
+    intervalId = setInterval(() => { fetchRobots(); fetchPending(); }, 15000);
   });
 
   onDestroy(() => {
@@ -81,10 +120,10 @@
       <p class="page-subtitle">Permanent robot provisioning and key management</p>
     </div>
     <div class="header-actions">
-      <PageButton on:click={() => (showForm = !showForm)}>
+      <PageButton onclick={() => (showForm = !showForm)}>
         {showForm ? "Cancel" : "+ Add Robot"}
       </PageButton>
-      <PageButton on:click={fetchRobots} variant="secondary">Refresh</PageButton>
+      <PageButton onclick={fetchRobots} variant="secondary">Refresh</PageButton>
     </div>
   </div>
 
@@ -109,9 +148,51 @@
         </div>
       </div>
       <div class="form-actions">
-        <button class="btn-register" on:click={handleProvision} disabled={formSubmitting}>
+        <button class="btn-register" onclick={handleProvision} disabled={formSubmitting}>
           {formSubmitting ? "Registering..." : "Register Robot"}
         </button>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Pending Registrations -->
+  {#if pendingRobots.length > 0}
+    <div class="pending-section">
+      <div class="pending-header">
+        <h2>Pending Registrations ({pendingRobots.length})</h2>
+        <p>Robots waiting for approval. These expire after 5 minutes.</p>
+      </div>
+      <div class="pending-grid">
+        {#each pendingRobots as robot (robot.uuid)}
+          <div class="pending-card">
+            <div class="pending-info">
+              <div class="pending-row">
+                <span class="pending-label">UUID</span>
+                <span class="pending-value mono">{robot.uuid}</span>
+              </div>
+              <div class="pending-row">
+                <span class="pending-label">Type</span>
+                <span class="pending-value">{robot.device_type}</span>
+              </div>
+              <div class="pending-row">
+                <span class="pending-label">IP</span>
+                <span class="pending-value mono">{robot.ip}</span>
+              </div>
+              <div class="pending-row">
+                <span class="pending-label">Key</span>
+                <span class="pending-value mono" title={robot.public_key}>{fingerprint(robot.public_key)}</span>
+              </div>
+              <div class="pending-row">
+                <span class="pending-label">Requested</span>
+                <span class="pending-value">{timeSince(robot.requested_at)}</span>
+              </div>
+            </div>
+            <div class="pending-actions">
+              <button class="btn-accept" onclick={() => respondToRegistration(robot.uuid, true)}>Accept</button>
+              <button class="btn-deny" onclick={() => respondToRegistration(robot.uuid, false)}>Reject</button>
+            </div>
+          </div>
+        {/each}
       </div>
     </div>
   {/if}
@@ -162,7 +243,7 @@
                   class="action-btn"
                   class:btn-blacklist={!robot.IsBlacklisted}
                   class:btn-unblacklist={robot.IsBlacklisted}
-                  on:click={() => handleBlacklist(robot.UUID, robot.IsBlacklisted)}
+                  onclick={() => handleBlacklist(robot.UUID, robot.IsBlacklisted)}
                 >
                   {robot.IsBlacklisted ? "Unblacklist" : "Blacklist"}
                 </button>
@@ -455,5 +536,106 @@
 
   .btn-unblacklist:hover {
     background: var(--success-muted);
+  }
+
+  /* --- Pending Registrations --- */
+  .pending-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--warning, #f59e0b);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .pending-header {
+    margin-bottom: 1rem;
+  }
+
+  .pending-header h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--warning, #f59e0b);
+    margin: 0 0 0.25rem 0;
+  }
+
+  .pending-header p {
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    margin: 0;
+  }
+
+  .pending-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .pending-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+
+  .pending-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .pending-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.82rem;
+  }
+
+  .pending-label {
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .pending-value {
+    color: var(--text-secondary);
+  }
+
+  .pending-value.mono {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+  }
+
+  .pending-actions {
+    display: flex;
+    gap: 0.5rem;
+    border-top: 1px solid var(--border);
+    padding-top: 0.75rem;
+  }
+
+  .btn-accept,
+  .btn-deny {
+    flex: 1;
+    padding: 0.45rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.82rem;
+    transition: background-color 0.12s;
+  }
+
+  .btn-accept { background: var(--success); color: white; }
+  .btn-accept:hover { background: #16a34a; }
+  .btn-deny { background: var(--error-muted); color: var(--error); }
+  .btn-deny:hover { background: var(--error); color: white; }
+
+  /* --- Mobile --- */
+  @media (max-width: 768px) {
+    .page-header { flex-direction: column; gap: 0.75rem; }
+    .header-actions { width: 100%; }
+    .form-grid { grid-template-columns: 1fr; }
+    .pending-grid { grid-template-columns: 1fr; }
+    table { font-size: 0.8rem; }
+    th, td { padding: 0.5rem; }
   }
 </style>

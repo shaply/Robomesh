@@ -6,19 +6,17 @@ import (
 	"roboserver/http_server/http_events"
 	"roboserver/shared"
 	"strings"
-
-	"github.com/go-chi/chi/v5"
 )
 
-func (h *HTTPServer_t) EventRoutes(r chi.Router) {
-	r.Get("/", h.eventsHandler)                        // SSE stream endpoint
-	r.Post("/subscribe", h.eventsSubscribeHandler)     // POST for subscription management
-	r.Post("/unsubscribe", h.eventsUnsubscribeHandler) // POST for unsubscription management
-}
-
-// TODO: Implement WebSocket handling logic
+// eventsHandler handles SSE connections. Accepts either a single-use ticket (?ticket=...)
+// or a JWT from Authorization header/cookie. Tickets are preferred for browser EventSource
+// since it cannot set custom headers.
 func (h *HTTPServer_t) eventsHandler(w http.ResponseWriter, r *http.Request) {
-	session := GetSessionFromRequest(r)
+	// Try ticket first (for EventSource connections), then JWT
+	session := h.validateTicket(r)
+	if session == nil {
+		session = h.validateSessionFull(r)
+	}
 	if session == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -51,9 +49,24 @@ func (h *HTTPServer_t) eventsHandler(w http.ResponseWriter, r *http.Request) {
 
 	eSess := http_events.NewEventSession(session)
 
-	client := h.sseManager.RegisterClient(eSess, w)
+	// Create a session validator that periodically checks Redis for session validity.
+	// This closes the SSE connection if the user logs out or the session is revoked.
+	token := extractRawToken(r)
+	validator := func() bool {
+		if token == "" {
+			return false
+		}
+		rds := h.db.Redis()
+		if rds == nil {
+			return false
+		}
+		username, err := rds.GetUserSession(r.Context(), token)
+		return err == nil && username == session.UserID
+	}
 
-	shared.DebugPrint("Registered new SSE client %v subscribed to %v", eSess, eventNames)
+	client := h.sseManager.RegisterClient(eSess, w, validator)
+
+	shared.DebugPrint("Registered new SSE client (user=%s) subscribed to %v", eSess.Session.UserID, eventNames)
 
 	// Subscribe to specific events if provided
 	if len(eventNames) > 0 {
@@ -67,7 +80,7 @@ func (h *HTTPServer_t) eventsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *HTTPServer_t) eventsSubscribeHandler(w http.ResponseWriter, r *http.Request) {
-	sess := GetSessionFromRequest(r)
+	sess := h.validateSessionFull(r)
 	if sess == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -96,7 +109,7 @@ func (h *HTTPServer_t) eventsSubscribeHandler(w http.ResponseWriter, r *http.Req
 }
 
 func (h *HTTPServer_t) eventsUnsubscribeHandler(w http.ResponseWriter, r *http.Request) {
-	sess := GetSessionFromRequest(r)
+	sess := h.validateSessionFull(r)
 	if sess == nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return

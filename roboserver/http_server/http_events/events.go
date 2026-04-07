@@ -18,9 +18,10 @@ func NewEventsManager(bus comms.Bus) *EventsManager_t {
 	}
 }
 
-// RegisterClient registers a new WebSocket client with the EventsManager.
-func (em *EventsManager_t) RegisterClient(sess *EventSession, w http.ResponseWriter) *EventsClient {
-	client := NewEventsClient(sess, w, em)
+// RegisterClient registers a new SSE client with the EventsManager.
+// The validator function is called periodically to check if the session is still valid.
+func (em *EventsManager_t) RegisterClient(sess *EventSession, w http.ResponseWriter, validator SessionValidator) *EventsClient {
+	client := NewEventsClient(sess, w, em, validator)
 	oldClient, exists := em.clients.Pop(*sess)
 	if exists {
 		oldClient.cleanup() // Clean up old client resources

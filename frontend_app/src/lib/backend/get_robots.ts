@@ -109,3 +109,62 @@ export async function blacklistRobot(uuid: string, blacklisted: boolean): Promis
         return false;
     }
 }
+
+// --- Handler Lifecycle ---
+
+export interface HandlerStatus {
+    uuid: string;
+    active: boolean;
+    pid?: number;
+    device_type?: string;
+}
+
+// Get handler status for a specific robot.
+export async function getHandlerStatus(uuid: string): Promise<HandlerStatus | null> {
+    try {
+        const response = await fetchBackend(`/handler/${uuid}`, { method: 'GET' });
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching handler status:', error);
+        return null;
+    }
+}
+
+// Get all running handlers.
+export async function getAllHandlers(): Promise<Record<string, number>> {
+    try {
+        const response = await fetchBackend('/handler/', { method: 'GET' });
+        if (!response.ok) return {};
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching handlers:', error);
+        return {};
+    }
+}
+
+// Start a handler for a robot.
+export async function startHandler(uuid: string): Promise<boolean> {
+    try {
+        const response = await fetchBackend(`/handler/${uuid}/start`, {
+            method: 'POST',
+        });
+        return response.ok;
+    } catch (error) {
+        console.error('Error starting handler:', error);
+        return false;
+    }
+}
+
+// Kill a running handler.
+export async function killHandler(uuid: string): Promise<boolean> {
+    try {
+        const response = await fetchBackend(`/handler/${uuid}/kill`, {
+            method: 'POST',
+        });
+        return response.ok;
+    } catch (error) {
+        console.error('Error killing handler:', error);
+        return false;
+    }
+}

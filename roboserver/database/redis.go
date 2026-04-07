@@ -89,11 +89,6 @@ func (h *RedisHandler) GetActiveRobot(ctx context.Context, uuid string) (*Active
 	return r, nil
 }
 
-// RefreshHeartbeat resets the TTL on a robot's active session key.
-func (h *RedisHandler) RefreshHeartbeat(ctx context.Context, uuid string, ttl time.Duration) error {
-	return h.Client.Expire(ctx, robotKey(uuid), ttl).Err()
-}
-
 // RemoveActiveRobot deletes a robot's active session from Redis.
 func (h *RedisHandler) RemoveActiveRobot(ctx context.Context, uuid string) error {
 	return h.Client.Del(ctx, robotKey(uuid)).Err()
@@ -107,13 +102,10 @@ func (h *RedisHandler) IsRobotActive(ctx context.Context, uuid string) (bool, er
 
 // GetAllActiveRobots returns all robots with active sessions.
 func (h *RedisHandler) GetAllActiveRobots(ctx context.Context) ([]*ActiveRobot, error) {
-	keys, err := h.Client.Keys(ctx, "robot:*:active").Result()
-	if err != nil {
-		return nil, err
-	}
-	robots := make([]*ActiveRobot, 0, len(keys))
-	for _, key := range keys {
-		data, err := h.Client.Get(ctx, key).Bytes()
+	var robots []*ActiveRobot
+	iter := h.Client.Scan(ctx, 0, "robot:*:active", 100).Iterator()
+	for iter.Next(ctx) {
+		data, err := h.Client.Get(ctx, iter.Val()).Bytes()
 		if err != nil {
 			continue
 		}
@@ -122,6 +114,9 @@ func (h *RedisHandler) GetAllActiveRobots(ctx context.Context) ([]*ActiveRobot, 
 			continue
 		}
 		robots = append(robots, r)
+	}
+	if err := iter.Err(); err != nil {
+		return nil, err
 	}
 	return robots, nil
 }
@@ -169,11 +164,17 @@ func registrationResponseChannel(uuid string) string {
 // SetPendingRobot stores a pending registration in Redis with TTL.
 func (h *RedisHandler) SetPendingRobot(ctx context.Context, robot *PendingRobot, ttl time.Duration) error {
 	// Check for duplicate UUID in both pending and active
-	exists, _ := h.Client.Exists(ctx, pendingKey(robot.UUID)).Result()
+	exists, err := h.Client.Exists(ctx, pendingKey(robot.UUID)).Result()
+	if err != nil {
+		return fmt.Errorf("failed to check pending status for %s: %w", robot.UUID, err)
+	}
 	if exists > 0 {
 		return fmt.Errorf("robot %s already has a pending registration", robot.UUID)
 	}
-	active, _ := h.Client.Exists(ctx, robotKey(robot.UUID)).Result()
+	active, err := h.Client.Exists(ctx, robotKey(robot.UUID)).Result()
+	if err != nil {
+		return fmt.Errorf("failed to check active status for %s: %w", robot.UUID, err)
+	}
 	if active > 0 {
 		return fmt.Errorf("robot %s is already active", robot.UUID)
 	}
@@ -205,13 +206,10 @@ func (h *RedisHandler) RemovePendingRobot(ctx context.Context, uuid string) erro
 
 // GetAllPendingRobots returns all robots with pending registrations.
 func (h *RedisHandler) GetAllPendingRobots(ctx context.Context) ([]*PendingRobot, error) {
-	keys, err := h.Client.Keys(ctx, "robot:*:pending").Result()
-	if err != nil {
-		return nil, err
-	}
-	robots := make([]*PendingRobot, 0, len(keys))
-	for _, key := range keys {
-		data, err := h.Client.Get(ctx, key).Bytes()
+	var robots []*PendingRobot
+	iter := h.Client.Scan(ctx, 0, "robot:*:pending", 100).Iterator()
+	for iter.Next(ctx) {
+		data, err := h.Client.Get(ctx, iter.Val()).Bytes()
 		if err != nil {
 			continue
 		}
@@ -221,7 +219,155 @@ func (h *RedisHandler) GetAllPendingRobots(ctx context.Context) ([]*PendingRobot
 		}
 		robots = append(robots, r)
 	}
+	if err := iter.Err(); err != nil {
+		return nil, err
+	}
 	return robots, nil
+}
+
+// --- Heartbeat Tracking ---
+
+// HeartbeatState represents a robot's heartbeat state in Redis, independent of handler sessions.
+type HeartbeatState struct {
+	UUID     string `json:"uuid"`
+	IP       string `json:"ip"`
+	LastSeq  int64  `json:"last_seq"`
+	LastSeen int64  `json:"last_seen"`
+}
+
+func heartbeatKey(uuid string) string {
+	return fmt.Sprintf("robot:%s:heartbeat", uuid)
+}
+
+// SetHeartbeat stores or updates a robot's heartbeat state in Redis.
+func (h *RedisHandler) SetHeartbeat(ctx context.Context, state *HeartbeatState, ttl time.Duration) error {
+	data, err := json.Marshal(state)
+	if err != nil {
+		return fmt.Errorf("failed to marshal heartbeat state: %w", err)
+	}
+	return h.Client.Set(ctx, heartbeatKey(state.UUID), data, ttl).Err()
+}
+
+// GetHeartbeat retrieves a robot's heartbeat state from Redis.
+func (h *RedisHandler) GetHeartbeat(ctx context.Context, uuid string) (*HeartbeatState, error) {
+	data, err := h.Client.Get(ctx, heartbeatKey(uuid)).Bytes()
+	if err != nil {
+		return nil, err
+	}
+	s := &HeartbeatState{}
+	if err := json.Unmarshal(data, s); err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+// RemoveHeartbeat deletes a robot's heartbeat state from Redis.
+func (h *RedisHandler) RemoveHeartbeat(ctx context.Context, uuid string) error {
+	return h.Client.Del(ctx, heartbeatKey(uuid)).Err()
+}
+
+// IsRobotOnline checks if a robot has a current heartbeat (independent of handler).
+func (h *RedisHandler) IsRobotOnline(ctx context.Context, uuid string) (bool, error) {
+	n, err := h.Client.Exists(ctx, heartbeatKey(uuid)).Result()
+	return n > 0, err
+}
+
+// GetAllOnlineRobots returns all robots with active heartbeats.
+func (h *RedisHandler) GetAllOnlineRobots(ctx context.Context) ([]*HeartbeatState, error) {
+	var states []*HeartbeatState
+	iter := h.Client.Scan(ctx, 0, "robot:*:heartbeat", 100).Iterator()
+	for iter.Next(ctx) {
+		data, err := h.Client.Get(ctx, iter.Val()).Bytes()
+		if err != nil {
+			continue
+		}
+		s := &HeartbeatState{}
+		if err := json.Unmarshal(data, s); err != nil {
+			continue
+		}
+		states = append(states, s)
+	}
+	if err := iter.Err(); err != nil {
+		return nil, err
+	}
+	return states, nil
+}
+
+// --- User Authentication ---
+
+// User represents a user account stored in Redis.
+type User struct {
+	Username     string `json:"username"`
+	PasswordHash string `json:"password_hash"`
+}
+
+func userKey(username string) string {
+	return fmt.Sprintf("user:%s", username)
+}
+
+// SetUser stores a user in Redis (no TTL — permanent until deleted).
+func (h *RedisHandler) SetUser(ctx context.Context, user *User) error {
+	data, err := json.Marshal(user)
+	if err != nil {
+		return fmt.Errorf("failed to marshal user: %w", err)
+	}
+	return h.Client.Set(ctx, userKey(user.Username), data, 0).Err()
+}
+
+// GetUser retrieves a user from Redis by username.
+func (h *RedisHandler) GetUser(ctx context.Context, username string) (*User, error) {
+	data, err := h.Client.Get(ctx, userKey(username)).Bytes()
+	if err != nil {
+		return nil, err
+	}
+	u := &User{}
+	if err := json.Unmarshal(data, u); err != nil {
+		return nil, err
+	}
+	return u, nil
+}
+
+// --- User Session Management ---
+
+func userSessionKey(token string) string {
+	return fmt.Sprintf("session:%s", token)
+}
+
+// SetUserSession stores a user session token in Redis with TTL.
+func (h *RedisHandler) SetUserSession(ctx context.Context, token, username string, ttl time.Duration) error {
+	return h.Client.Set(ctx, userSessionKey(token), username, ttl).Err()
+}
+
+// GetUserSession retrieves the username associated with a session token.
+func (h *RedisHandler) GetUserSession(ctx context.Context, token string) (string, error) {
+	return h.Client.Get(ctx, userSessionKey(token)).Result()
+}
+
+// RemoveUserSession deletes a user session from Redis.
+func (h *RedisHandler) RemoveUserSession(ctx context.Context, token string) error {
+	return h.Client.Del(ctx, userSessionKey(token)).Err()
+}
+
+// --- SSE Ticket Management ---
+
+func ticketKey(ticket string) string {
+	return fmt.Sprintf("ticket:%s", ticket)
+}
+
+// SetTicket stores a single-use SSE ticket in Redis with a short TTL.
+func (h *RedisHandler) SetTicket(ctx context.Context, ticket, username string, ttl time.Duration) error {
+	return h.Client.Set(ctx, ticketKey(ticket), username, ttl).Err()
+}
+
+// ConsumeTicket retrieves and deletes a ticket atomically (single-use).
+// Returns the username associated with the ticket, or error if not found/expired.
+func (h *RedisHandler) ConsumeTicket(ctx context.Context, ticket string) (string, error) {
+	key := ticketKey(ticket)
+	username, err := h.Client.GetDel(ctx, key).Result()
+	if err != nil {
+		return "", err
+	}
+	return username, nil
 }
 
 // PublishRegistrationResponse publishes an accept/reject response for a pending robot.

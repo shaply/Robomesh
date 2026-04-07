@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"roboserver/comms"
 	"roboserver/database"
+	"roboserver/handler_engine"
 	"roboserver/http_server"
 	"roboserver/mqtt_server"
 	"roboserver/shared"
@@ -50,7 +51,7 @@ func main() {
 	// Initialize database manager (PostgreSQL + Redis)
 	dbManager, err := database.Start(ctx)
 	if err != nil {
-		shared.DebugPrint("Failed to initialize databases: %v", err)
+		panic(fmt.Sprintf("Failed to initialize databases: %v", err))
 	}
 	wg.Add(1)
 	go func() {
@@ -87,11 +88,11 @@ func main() {
 		}
 	}()
 
-	// Start MQTT server (stub)
+	// Start MQTT server
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := mqtt_server.Start(ctx); err != nil {
+		if err := mqtt_server.Start(ctx, bus, dbManager); err != nil {
 			shared.DebugError(err)
 			cancel()
 		}
@@ -118,6 +119,9 @@ func main() {
 	}
 
 	cancel()
+
+	// Stop all handler processes
+	handler_engine.HandlerManager.StopAll("server_shutdown")
 
 	done := make(chan struct{})
 	go func() {

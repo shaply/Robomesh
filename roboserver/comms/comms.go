@@ -22,6 +22,16 @@ type Bus interface {
 	// asynchronously — long-running handlers should be aware of concurrency.
 	SubscribeEvent(eventType string, handler EventHandler) (cancel func(), err error)
 
+	// PublishToGroup sends an event that only ONE subscriber in the named
+	// group will receive (competing consumers). In a single-instance deployment,
+	// this behaves like round-robin across subscribers. For Kafka/NATS migration,
+	// this maps to consumer groups / queue subscriptions.
+	PublishToGroup(group string, eventType string, data any) error
+
+	// SubscribeAsGroup joins a consumer group. Only one member per group
+	// receives each published event.
+	SubscribeAsGroup(group string, eventType string, handler EventHandler) (cancel func(), err error)
+
 	// PublishRegistrationResponse sends an accept/reject decision for a
 	// pending robot registration. Unblocks any corresponding
 	// WaitForRegistrationResponse call.
@@ -40,22 +50,3 @@ type Event struct {
 	Type string
 	Data any
 }
-
-// TODO: For microservice migration, add competing-consumer (point-to-point)
-// delivery. When multiple instances of a service exist (e.g., N TCP servers),
-// some events must reach exactly ONE instance — not broadcast to all.
-//
-// Proposed additions to Bus:
-//
-//   // PublishToGroup sends an event that only ONE subscriber in the named
-//   // group will receive (competing consumers). Maps to Kafka consumer
-//   // groups, NATS queue subscriptions, etc.
-//   PublishToGroup(group string, eventType string, data any) error
-//
-//   // SubscribeAsGroup joins a consumer group. Only one member per group
-//   // receives each published event.
-//   SubscribeAsGroup(group string, eventType string, handler EventHandler) (cancel func(), err error)
-//
-// Current state: WaitForRegistrationResponse already achieves point-to-point
-// via UUID-scoped Redis pub/sub channels, so this isn't needed yet. Add these
-// methods when actually deploying multiple service instances behind Kafka/NATS.

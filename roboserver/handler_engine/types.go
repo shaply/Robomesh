@@ -15,6 +15,8 @@ const (
 	TargetRobot    = "robot"
 	TargetEventBus = "event_bus"
 	TargetResponse = "response"
+	TargetConfig   = "config"
+	TargetConnect  = "connect_robot"
 )
 
 // System messages sent by the Go sidecar to handler scripts
@@ -22,6 +24,8 @@ const (
 	MsgTypeConnect    = "connect"
 	MsgTypeDisconnect = "disconnect"
 	MsgTypeIncoming   = "incoming"
+	MsgTypeEvent      = "event"
+	MsgTypeHeartbeat  = "heartbeat"
 )
 
 // ConnectMessage is sent to the handler script when a robot authenticates.
@@ -45,4 +49,11 @@ type IncomingMessage struct {
 	Type    string `json:"type"`
 	UUID    string `json:"uuid"`
 	Payload string `json:"payload"`
+}
+
+// EventMessage wraps a comm bus event forwarded to the handler.
+type EventMessage struct {
+	Type      string      `json:"type"`
+	EventType string      `json:"event_type"`
+	Data      interface{} `json:"data"`
 }

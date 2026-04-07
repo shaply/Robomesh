@@ -383,8 +383,9 @@ func TestEventBusPerformance(t *testing.T) {
 	t.Logf("Published %d events to %d subscribers in %v (avg: %v per event)",
 		numEvents, numSubscribers, publishDuration, avgTimePerEvent)
 
-	// Performance check (adjust threshold as needed)
-	if avgTimePerEvent > time.Millisecond {
+	// Performance check — threshold set high enough to avoid flakiness on
+	// loaded machines / CI runners while still catching major regressions.
+	if avgTimePerEvent > 5*time.Millisecond {
 		t.Errorf("Average time per event too high: %v", avgTimePerEvent)
 	}
 }

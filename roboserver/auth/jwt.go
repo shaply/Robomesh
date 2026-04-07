@@ -49,8 +49,14 @@ func IssueSessionJWT(uuid, deviceType, ip, sessionID string) (string, error) {
 	}
 
 	header := JWTHeader{Alg: "HS256", Typ: "JWT"}
-	headerJSON, _ := json.Marshal(header)
-	claimsJSON, _ := json.Marshal(claims)
+	headerJSON, err := json.Marshal(header)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal JWT header: %w", err)
+	}
+	claimsJSON, err := json.Marshal(claims)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal JWT claims: %w", err)
+	}
 
 	headerB64 := base64.RawURLEncoding.EncodeToString(headerJSON)
 	claimsB64 := base64.RawURLEncoding.EncodeToString(claimsJSON)
@@ -104,6 +110,10 @@ func signHS256(input, secret string) string {
 
 // GenerateSessionID creates a unique session identifier.
 func GenerateSessionID() string {
-	nonce, _ := GenerateNonce()
+	nonce, err := GenerateNonce()
+	if err != nil {
+		// Fallback: this should never happen as GenerateNonce uses crypto/rand
+		return fmt.Sprintf("sess_%d", time.Now().UnixNano())
+	}
 	return fmt.Sprintf("sess_%s", nonce[:16])
 }

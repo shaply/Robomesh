@@ -1,0 +1,2 @@
+/usr/bin/ar qc librobomesh.a CMakeFiles/robomesh.dir/src/robomesh.c.o
+/usr/bin/ranlib librobomesh.a

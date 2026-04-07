@@ -48,6 +48,8 @@ type mockBus struct{}
 
 func (b *mockBus) PublishEvent(string, any) error                                        { return nil }
 func (b *mockBus) SubscribeEvent(string, comms.EventHandler) (func(), error)             { return func() {}, nil }
+func (b *mockBus) PublishToGroup(string, string, any) error                              { return nil }
+func (b *mockBus) SubscribeAsGroup(string, string, comms.EventHandler) (func(), error)   { return func() {}, nil }
 func (b *mockBus) PublishRegistrationResponse(_ context.Context, _ string, _ bool) error { return nil }
 func (b *mockBus) WaitForRegistrationResponse(_ context.Context, _ string) (bool, error) {
 	return false, nil

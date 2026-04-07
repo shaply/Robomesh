@@ -5,48 +5,12 @@ import { writable } from 'svelte/store';
 type SvelteComponent = any;
 
 /**
- * Notification int// Custom notification with HTML content
-export function notifyCustom(
-    type: 'success' | 'error' | 'warning' | 'info',
-    title: string,
-    customContent: string,
-    duration?: number | null
-): string {
-    return pushNotification({ 
-        type, 
-        title, 
-        customContent, 
-        duration 
-    });
-}
-
-// Component notification with Svelte component
-export function notifyComponent(
-    type: 'success' | 'error' | 'warning' | 'info',
-    title: string,
-    componentClass: ComponentType,
-    props?: Record<string, any>,
-    duration?: number | null
-): string {
-    return pushNotification({
-        type,
-        title,
-        component: {
-            componentClass,
-            props
-        },
-        duration
-    });
-}g the structure of a notification object.
- * 
+ * Notification interface describing the structure of a notification object.
+ *
  * Only one of message, customContent, or component should be provided.
  * - message: Simple text message
  * - customContent: Raw HTML content
  * - component: Svelte component with props, the notification id will be passed in along with the props as notificationId
- * 
- * @property {string} message - The message content of the notification.
- * @property {string} customContent - Optional HTML content for custom notifications.
- * @property {object} component - Optional Svelte component configuration.
  */
 export interface Notification {
     id: string;

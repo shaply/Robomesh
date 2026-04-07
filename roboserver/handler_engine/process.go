@@ -26,6 +26,7 @@ type HandlerProcess struct {
 	cmd    *exec.Cmd
 	stdin  io.WriteCloser
 	stdout io.ReadCloser
+	stderr io.ReadCloser
 	cancel context.CancelFunc
 
 	db  *database.PostgresHandler
@@ -37,6 +38,15 @@ type HandlerProcess struct {
 
 	// RobotSend is called to send data back to the robot's TCP connection.
 	RobotSend func(data []byte) error
+
+	// Bus subscription cancelers (cleaned up on Stop)
+	subscriptions []func()
+
+	// ForwardHeartbeats controls whether heartbeat events are forwarded to this handler.
+	ForwardHeartbeats bool
+
+	// wg tracks background goroutines (e.g., reverse connections) for clean shutdown.
+	wg sync.WaitGroup
 }
 
 // SpawnHandlerProcess starts a handler script for an authenticated robot.
@@ -68,6 +78,12 @@ func SpawnHandlerProcess(
 		return nil, fmt.Errorf("failed to create stdout pipe: %w", err)
 	}
 
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		cancel()
+		return nil, fmt.Errorf("failed to create stderr pipe: %w", err)
+	}
+
 	// Put the handler in its own process group so we can kill the entire
 	// tree (bash + any child python/node processes) on shutdown, preventing
 	// orphaned processes from leaking memory and CPU.
@@ -95,6 +111,7 @@ func SpawnHandlerProcess(
 		cmd:        cmd,
 		stdin:      stdin,
 		stdout:     stdout,
+		stderr:     stderr,
 		cancel:     cancel,
 		db:         db,
 		rds:        rds,
@@ -111,6 +128,9 @@ func SpawnHandlerProcess(
 		}
 	}
 
+	// Register in global handler map
+	HandlerManager.Register(hp)
+
 	shared.DebugPrint("Spawned handler process PID %d for robot %s (%s)", hp.PID, uuid, deviceType)
 
 	// Send connect message to the handler script
@@ -122,10 +142,56 @@ func SpawnHandlerProcess(
 		SessionID:  sessionID,
 	})
 
+	// Subscribe to directed messages on the event bus (e.g., handler.{uuid}.message)
+	hp.setupBusSubscriptions()
+
 	// Start stdout listener (routes JSON-RPC envelopes)
 	go hp.listenStdout(procCtx)
 
+	// Start stderr listener (publishes handler log lines on the event bus)
+	go hp.listenStderr(procCtx)
+
 	return hp, nil
+}
+
+// setupBusSubscriptions sets up event bus subscriptions for this handler.
+func (hp *HandlerProcess) setupBusSubscriptions() {
+	if hp.bus == nil {
+		return
+	}
+
+	// Subscribe to messages directed at this handler
+	topic := fmt.Sprintf("handler.%s.message", hp.UUID)
+	cancel, err := hp.bus.SubscribeEvent(topic, func(eventType string, data any) {
+		hp.sendToScript(&EventMessage{
+			Type:      MsgTypeEvent,
+			EventType: eventType,
+			Data:      data,
+		})
+	})
+	if err == nil {
+		hp.mu.Lock()
+		hp.subscriptions = append(hp.subscriptions, cancel)
+		hp.mu.Unlock()
+	}
+}
+
+// Reattach reconnects a robot's TCP connection to this handler after a disconnect.
+// Updates the RobotSend callback and sends a reconnect message to the handler script.
+func (hp *HandlerProcess) Reattach(robotSend func(data []byte) error, ip, sessionID string) {
+	hp.mu.Lock()
+	hp.RobotSend = robotSend
+	hp.IP = ip
+	hp.SessionID = sessionID
+	hp.mu.Unlock()
+
+	hp.sendToScript(&ConnectMessage{
+		Type:       MsgTypeConnect,
+		UUID:       hp.UUID,
+		DeviceType: hp.DeviceType,
+		IP:         ip,
+		SessionID:  sessionID,
+	})
 }
 
 // SendIncoming forwards a message from the robot TCP connection to the handler's stdin.
@@ -135,6 +201,33 @@ func (hp *HandlerProcess) SendIncoming(payload string) {
 		UUID:    hp.UUID,
 		Payload: payload,
 	})
+}
+
+// SendDisconnect notifies the handler that the robot's TCP connection has closed,
+// but does NOT kill the handler process. The handler may continue running for
+// background tasks, reverse connections, etc.
+func (hp *HandlerProcess) SendDisconnect(reason string) {
+	hp.mu.Lock()
+	defer hp.mu.Unlock()
+	if hp.closed {
+		return
+	}
+
+	hp.RobotSend = nil // No longer connected
+
+	msg := &DisconnectMessage{
+		Type:   MsgTypeDisconnect,
+		UUID:   hp.UUID,
+		Reason: reason,
+	}
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return
+	}
+	data = append(data, '\n')
+	if _, err := hp.stdin.Write(data); err != nil {
+		shared.DebugPrint("Failed to send disconnect to handler %s: %v", hp.UUID, err)
+	}
 }
 
 // Stop gracefully shuts down the handler process.
@@ -164,7 +257,7 @@ func (hp *HandlerProcess) Stop(reason string) {
 	select {
 	case <-done:
 		shared.DebugPrint("Handler process PID %d exited cleanly", hp.PID)
-	case <-time.After(10 * time.Second):
+	case <-time.After(shared.AppConfig.Timeouts.ProcessKillTimeout()):
 		shared.DebugPrint("Handler process PID %d did not exit in time, killing process group", hp.PID)
 		// Kill the entire process group (negative PID) to prevent orphaned
 		// child processes (e.g., python3, node) from leaking.
@@ -174,10 +267,21 @@ func (hp *HandlerProcess) Stop(reason string) {
 
 	hp.stdin.Close()
 
-	// Clean up Redis
-	if hp.rds != nil {
-		hp.rds.RemoveActiveRobot(context.Background(), hp.UUID)
+	// Wait for background goroutines (reverse connections) to finish
+	hp.wg.Wait()
+
+	// Cancel all event bus subscriptions (copy under lock to avoid holding it during cancel calls)
+	hp.mu.Lock()
+	subs := make([]func(), len(hp.subscriptions))
+	copy(subs, hp.subscriptions)
+	hp.subscriptions = nil
+	hp.mu.Unlock()
+	for _, cancel := range subs {
+		cancel()
 	}
+
+	// Unregister from global handler map
+	HandlerManager.Unregister(hp.UUID)
 }
 
 func (hp *HandlerProcess) sendToScript(msg interface{}) {
@@ -198,6 +302,30 @@ func (hp *HandlerProcess) sendToScript(msg interface{}) {
 	}
 }
 
+// listenStderr reads lines from the handler's stderr and publishes them as log events.
+// Subscribers (e.g. WebSocket clients) can listen on "handler.{uuid}.log" for real-time logs.
+func (hp *HandlerProcess) listenStderr(ctx context.Context) {
+	scanner := bufio.NewScanner(hp.stderr)
+	for scanner.Scan() {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		line := scanner.Text()
+		shared.DebugPrint("Handler %s stderr: %s", hp.UUID, line)
+
+		if hp.bus != nil {
+			hp.bus.PublishEvent(fmt.Sprintf("handler.%s.log", hp.UUID), map[string]string{
+				"uuid":    hp.UUID,
+				"line":    line,
+				"stream":  "stderr",
+			})
+		}
+	}
+}
+
 // listenStdout reads JSON-RPC envelopes from the handler script's stdout and routes them.
 func (hp *HandlerProcess) listenStdout(ctx context.Context) {
 	scanner := bufio.NewScanner(hp.stdout)
@@ -211,7 +339,16 @@ func (hp *HandlerProcess) listenStdout(ctx context.Context) {
 		line := scanner.Bytes()
 		var envelope JSONRPCEnvelope
 		if err := json.Unmarshal(line, &envelope); err != nil {
-			shared.DebugPrint("Invalid JSON from handler %s: %s", hp.UUID, string(line))
+			// Not valid JSON-RPC — treat as a log line from stdout
+			logLine := string(line)
+			shared.DebugPrint("Handler %s stdout: %s", hp.UUID, logLine)
+			if hp.bus != nil {
+				hp.bus.PublishEvent(fmt.Sprintf("handler.%s.log", hp.UUID), map[string]string{
+					"uuid":   hp.UUID,
+					"line":   logLine,
+					"stream": "stdout",
+				})
+			}
 			continue
 		}
 
@@ -232,6 +369,10 @@ func (hp *HandlerProcess) routeEnvelope(ctx context.Context, env *JSONRPCEnvelop
 		hp.handleRobotRequest(env)
 	case TargetEventBus:
 		hp.handleEventBusRequest(env)
+	case TargetConfig:
+		hp.handleConfigRequest(env)
+	case TargetConnect:
+		hp.handleConnectRobotRequest(ctx, env)
 	default:
 		shared.DebugPrint("Unknown target %q from handler %s", env.Target, hp.UUID)
 		hp.sendResponse(env.ID, nil, "unknown target: "+env.Target)
@@ -289,6 +430,76 @@ func (hp *HandlerProcess) handleEventBusRequest(env *JSONRPCEnvelope) {
 	}
 	hp.bus.PublishEvent(eventType, env.Data)
 	hp.sendResponse(env.ID, "published", "")
+}
+
+func (hp *HandlerProcess) handleConfigRequest(env *JSONRPCEnvelope) {
+	switch env.Method {
+	case "forward_heartbeats":
+		enable, ok := env.Data.(bool)
+		if !ok {
+			hp.sendResponse(env.ID, nil, "data must be a boolean")
+			return
+		}
+		if enable && !hp.ForwardHeartbeats {
+			hp.enableHeartbeatForwarding()
+		} else if !enable {
+			hp.ForwardHeartbeats = false
+		}
+		hp.sendResponse(env.ID, hp.ForwardHeartbeats, "")
+
+	case "subscribe":
+		// Allow handlers to subscribe to arbitrary event bus topics
+		topic, ok := env.Data.(string)
+		if !ok {
+			hp.sendResponse(env.ID, nil, "data must be an event type string")
+			return
+		}
+		if hp.bus == nil {
+			hp.sendResponse(env.ID, nil, "event bus not available")
+			return
+		}
+		cancel, err := hp.bus.SubscribeEvent(topic, func(eventType string, data any) {
+			hp.sendToScript(&EventMessage{
+				Type:      MsgTypeEvent,
+				EventType: eventType,
+				Data:      data,
+			})
+		})
+		if err != nil {
+			hp.sendResponse(env.ID, nil, err.Error())
+			return
+		}
+		hp.mu.Lock()
+		hp.subscriptions = append(hp.subscriptions, cancel)
+		hp.mu.Unlock()
+		hp.sendResponse(env.ID, "subscribed", "")
+
+	default:
+		hp.sendResponse(env.ID, nil, "unknown config method: "+env.Method)
+	}
+}
+
+// enableHeartbeatForwarding subscribes the handler to this robot's heartbeat events.
+func (hp *HandlerProcess) enableHeartbeatForwarding() {
+	if hp.bus == nil {
+		return
+	}
+
+	topic := fmt.Sprintf("robot.%s.heartbeat", hp.UUID)
+	cancel, err := hp.bus.SubscribeEvent(topic, func(eventType string, data any) {
+		hp.sendToScript(&EventMessage{
+			Type:      MsgTypeHeartbeat,
+			EventType: eventType,
+			Data:      data,
+		})
+	})
+	if err == nil {
+		hp.mu.Lock()
+		hp.subscriptions = append(hp.subscriptions, cancel)
+		hp.mu.Unlock()
+		hp.ForwardHeartbeats = true
+		shared.DebugPrint("Heartbeat forwarding enabled for handler %s", hp.UUID)
+	}
 }
 
 func (hp *HandlerProcess) sendResponse(id string, data interface{}, errMsg string) {

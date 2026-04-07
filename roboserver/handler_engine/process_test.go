@@ -22,9 +22,9 @@ func init() {
 }
 
 func TestResolveHandlerScript(t *testing.T) {
-	// Create test handler
-	os.MkdirAll("testdata", 0o755)
-	testScript := filepath.Join("testdata", "test_robot.sh")
+	// Create test handler with new directory structure
+	os.MkdirAll(filepath.Join("testdata", "test_robot"), 0o755)
+	testScript := filepath.Join("testdata", "test_robot", "start_handler.sh")
 	os.WriteFile(testScript, []byte("#!/bin/bash\necho ok"), 0o755)
 	defer os.RemoveAll("testdata")
 

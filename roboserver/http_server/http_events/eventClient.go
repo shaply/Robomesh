@@ -11,11 +11,11 @@ import (
 	"roboserver/shared/utils"
 	"sync"
 	"sync/atomic"
+	"time"
 )
 
-// TODO:
-// It seems that the Event isn't getting sent, so either not properly subscribed or not properly handled
-// Implement the session flow between the HTTP server and the WebSocket server
+// SessionValidator is a function that returns false if the session is no longer valid.
+type SessionValidator func() bool
 
 type EventsClient struct {
 	Writer  http.ResponseWriter
@@ -27,27 +27,56 @@ type EventsClient struct {
 	cancelFuncs map[string]func()
 	cancelMu    sync.Mutex
 
-	msgQueue *data_structures.SafeQueue[*comms.Event] // Queue for outgoing messages
-	ended    atomic.Bool                               // Indicates if the client has ended
+	msgQueue         *data_structures.SafeQueue[*comms.Event] // Queue for outgoing messages
+	ended            atomic.Bool                               // Indicates if the client has ended
+	sessionValidator SessionValidator                          // Periodic session check
 }
 
-func NewEventsClient(sess *EventSession, w http.ResponseWriter, manager *EventsManager_t) *EventsClient {
+func NewEventsClient(sess *EventSession, w http.ResponseWriter, manager *EventsManager_t, validator SessionValidator) *EventsClient {
 	return &EventsClient{
-		Writer:      w,
-		Session:     *sess,
-		manager:     manager,
-		done:        make(chan struct{}),
-		cancelFuncs: make(map[string]func()),
-		msgQueue:    data_structures.NewSafeQueue[*comms.Event](true),
-		ended:       atomic.Bool{},
+		Writer:           w,
+		Session:          *sess,
+		manager:          manager,
+		done:             make(chan struct{}),
+		cancelFuncs:      make(map[string]func()),
+		msgQueue:         data_structures.NewSafeQueue[*comms.Event](true),
+		ended:            atomic.Bool{},
+		sessionValidator: validator,
 	}
 }
+
+const sessionCheckInterval = 60 * time.Second
 
 func (client *EventsClient) Start() {
 	client.ended.Store(false)
 
-	// TODO: Add session validation logic go routine
+	if client.sessionValidator != nil {
+		go client.validateSessionLoop()
+	}
 	go client.ReadMsgQueue()
+}
+
+// validateSessionLoop periodically checks if the user session is still valid.
+// If the session has been revoked (e.g. logout), the SSE connection is closed.
+func (client *EventsClient) validateSessionLoop() {
+	ticker := time.NewTicker(sessionCheckInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-client.done:
+			return
+		case <-ticker.C:
+			if client.ended.Load() {
+				return
+			}
+			if !client.sessionValidator() {
+				shared.DebugPrint("SSE session invalidated for user %s, closing connection", client.Session.Session.UserID)
+				client.cleanup()
+				return
+			}
+		}
+	}
 }
 
 func (client *EventsClient) cleanup() {

@@ -25,6 +25,11 @@ roboserver/build/
 frontend_app/build/
 frontend_app/node_modules/
 
+# Handler build artifacts
+handlers/*/node_modules/
+handlers/*/dist/
+handlers/*/frontend/node_modules/
+
 # Handler test keys
 handlers/example_robot/private_key.hex
 handlers/example_robot/public_key.hex

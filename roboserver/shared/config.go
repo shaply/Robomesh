@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -25,14 +26,53 @@ type Config struct {
 	Database DatabaseConfig `yaml:"database"`
 	Auth     AuthConfig     `yaml:"auth"`
 	Handlers HandlersConfig `yaml:"handlers"`
+	Timeouts TimeoutsConfig `yaml:"timeouts"`
+}
+
+type TimeoutsConfig struct {
+	Handshake      string `yaml:"handshake"`
+	ProcessKill    string `yaml:"process_kill"`
+	ReverseConnect string `yaml:"reverse_connect"`
+}
+
+func (t *TimeoutsConfig) HandshakeTimeout() time.Duration {
+	d, err := time.ParseDuration(t.Handshake)
+	if err != nil {
+		return 30 * time.Second
+	}
+	return d
+}
+
+func (t *TimeoutsConfig) ProcessKillTimeout() time.Duration {
+	d, err := time.ParseDuration(t.ProcessKill)
+	if err != nil {
+		return 10 * time.Second
+	}
+	return d
+}
+
+func (t *TimeoutsConfig) ReverseConnectTimeout() time.Duration {
+	d, err := time.ParseDuration(t.ReverseConnect)
+	if err != nil {
+		return 10 * time.Second
+	}
+	return d
 }
 
 type ServerConfig struct {
-	HTTPPort     int  `yaml:"http_port"`
-	TCPPort      int  `yaml:"tcp_port"`
-	MQTTPort     int  `yaml:"mqtt_port"`
-	TerminalPort int  `yaml:"terminal_port"`
-	Debug        bool `yaml:"debug"`
+	HTTPPort       int       `yaml:"http_port"`
+	TCPPort        int       `yaml:"tcp_port"`
+	MQTTPort       int       `yaml:"mqtt_port"`
+	TerminalPort   int       `yaml:"terminal_port"`
+	Debug          bool      `yaml:"debug"`
+	AllowedOrigins []string  `yaml:"allowed_origins"`
+	TLS            TLSConfig `yaml:"tls"`
+}
+
+type TLSConfig struct {
+	Enabled  bool   `yaml:"enabled"`
+	CertFile string `yaml:"cert_file"`
+	KeyFile  string `yaml:"key_file"`
 }
 
 type DatabaseConfig struct {
@@ -53,11 +93,12 @@ type PostgresConfig struct {
 }
 
 type RedisConfig struct {
-	Host       string `yaml:"host"`
-	Port       int    `yaml:"port"`
-	Password   string `yaml:"-"`
-	DB         int    `yaml:"db"`
-	SessionTTL string `yaml:"session_ttl"`
+	Host           string `yaml:"host"`
+	Port           int    `yaml:"port"`
+	Password       string `yaml:"-"`
+	DB             int    `yaml:"db"`
+	SessionTTL     string `yaml:"session_ttl"`
+	UserSessionTTL string `yaml:"user_session_ttl"`
 }
 
 type AuthConfig struct {
@@ -81,11 +122,20 @@ func (r *RedisConfig) Addr() string {
 	return fmt.Sprintf("%s:%d", r.Host, r.Port)
 }
 
-// TTL returns the session TTL as a time.Duration.
+// TTL returns the robot session TTL as a time.Duration.
 func (r *RedisConfig) TTL() time.Duration {
 	d, err := time.ParseDuration(r.SessionTTL)
 	if err != nil {
 		return 60 * time.Second
+	}
+	return d
+}
+
+// UserTTL returns the user session TTL as a time.Duration.
+func (r *RedisConfig) UserTTL() time.Duration {
+	d, err := time.ParseDuration(r.UserSessionTTL)
+	if err != nil {
+		return 24 * time.Hour
 	}
 	return d
 }
@@ -102,11 +152,12 @@ func (p *PostgresConfig) ConnLifetime() time.Duration {
 func defaultConfig() Config {
 	return Config{
 		Server: ServerConfig{
-			HTTPPort:     8080,
-			TCPPort:      5000,
-			MQTTPort:     1883,
-			TerminalPort: 6000,
-			Debug:        false,
+			HTTPPort:       8080,
+			TCPPort:        5000,
+			MQTTPort:       1883,
+			TerminalPort:   6000,
+			Debug:          false,
+			AllowedOrigins: []string{"http://localhost:5173", "http://localhost:4173"},
 		},
 		Database: DatabaseConfig{
 			Postgres: PostgresConfig{
@@ -120,10 +171,11 @@ func defaultConfig() Config {
 				ConnMaxLifetime: "1h",
 			},
 			Redis: RedisConfig{
-				Host:       "localhost",
-				Port:       6379,
-				DB:         0,
-				SessionTTL: "60s",
+				Host:           "localhost",
+				Port:           6379,
+				DB:             0,
+				SessionTTL:     "60s",
+				UserSessionTTL: "24h",
 			},
 		},
 		Auth: AuthConfig{
@@ -131,7 +183,12 @@ func defaultConfig() Config {
 			NonceLength: 32,
 		},
 		Handlers: HandlersConfig{
-			BasePath: "./handlers",
+			BasePath: "../handlers",
+		},
+		Timeouts: TimeoutsConfig{
+			Handshake:      "30s",
+			ProcessKill:    "10s",
+			ReverseConnect: "10s",
 		},
 	}
 }
@@ -179,6 +236,14 @@ func applyEnvOverrides(cfg *Config) {
 
 	// Handlers
 	envStr("HANDLERS_BASE_PATH", &cfg.Handlers.BasePath)
+
+	// TLS
+	envBool("TLS_ENABLED", &cfg.Server.TLS.Enabled)
+	envStr("TLS_CERT_FILE", &cfg.Server.TLS.CertFile)
+	envStr("TLS_KEY_FILE", &cfg.Server.TLS.KeyFile)
+
+	// CORS
+	envCSV("ALLOWED_ORIGINS", &cfg.Server.AllowedOrigins)
 }
 
 func envStr(key string, dst *string) {
@@ -198,5 +263,20 @@ func envInt(key string, dst *int) {
 func envBool(key string, dst *bool) {
 	if v := os.Getenv(key); v != "" {
 		*dst = v == "true"
+	}
+}
+
+func envCSV(key string, dst *[]string) {
+	if v := os.Getenv(key); v != "" {
+		var parts []string
+		for _, s := range strings.Split(v, ",") {
+			s = strings.TrimSpace(s)
+			if s != "" {
+				parts = append(parts, s)
+			}
+		}
+		if len(parts) > 0 {
+			*dst = parts
+		}
 	}
 }
