@@ -12,5 +12,5 @@ export type EventMap = Map<string, EventHandler[]>;
 export interface SentEvent {
     id: string;
     type: string;
-    encoded_data: string;
+    data: string;
 }

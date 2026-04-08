@@ -2,12 +2,22 @@ import { PUBLIC_BACKEND_IP, PUBLIC_BACKEND_PORT } from "$env/static/public";
 import { API_AUTH_TOKEN } from "$lib/const.js";
 import { browser } from "$app/environment";
 
+/**
+ * Returns the base URL for the backend API, using the browser's current
+ * protocol (http/https) so that TLS works without extra configuration.
+ * Falls back to "http" during SSR or when window is not available.
+ */
+export function backendBaseUrl(): string {
+    const protocol = browser && window.location.protocol === 'https:' ? 'https' : 'http';
+    return `${protocol}://${PUBLIC_BACKEND_IP}:${PUBLIC_BACKEND_PORT}`;
+}
+
 export async function fetchBackend(url: string, options: RequestInit = {}): Promise<Response> {
     if (!PUBLIC_BACKEND_IP || !PUBLIC_BACKEND_PORT) {
         throw new Error('Backend IP or port is not defined in environment variables');
     }
 
-    const fullUrl = `http://${PUBLIC_BACKEND_IP}:${PUBLIC_BACKEND_PORT}${url}`;
+    const fullUrl = `${backendBaseUrl()}${url}`;
 
     const headers = new Headers(options.headers);
     if (browser) {

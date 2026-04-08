@@ -91,6 +91,25 @@ func (h *PostgresHandler) BlacklistRobot(ctx context.Context, uuid string, black
 	return err
 }
 
+func (h *PostgresHandler) GetRobotsByType(ctx context.Context, deviceType string) ([]*RobotRecord, error) {
+	rows, err := h.DB.QueryContext(ctx,
+		`SELECT uuid, public_key, device_type, is_blacklisted, created_at FROM robots WHERE device_type = $1 ORDER BY created_at`, deviceType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var robots []*RobotRecord
+	for rows.Next() {
+		r := &RobotRecord{}
+		if err := rows.Scan(&r.UUID, &r.PublicKey, &r.DeviceType, &r.IsBlacklisted, &r.CreatedAt); err != nil {
+			return nil, err
+		}
+		robots = append(robots, r)
+	}
+	return robots, rows.Err()
+}
+
 func (h *PostgresHandler) GetAllRobots(ctx context.Context) ([]*RobotRecord, error) {
 	rows, err := h.DB.QueryContext(ctx,
 		`SELECT uuid, public_key, device_type, is_blacklisted, created_at FROM robots ORDER BY created_at`)

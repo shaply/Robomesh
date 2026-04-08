@@ -75,7 +75,7 @@ func PerformHandshake(ctx context.Context, conn net.Conn, db *database.PostgresH
 	}
 
 	// Step 5: Verify signature
-	if err := verifyRobotSignature(robot.PublicKey, nonce, signature); err != nil {
+	if err := VerifyRobotSignature(robot.PublicKey, nonce, signature); err != nil {
 		conn.Write([]byte("ERROR INVALID_SIGNATURE\n"))
 		return nil, fmt.Errorf("signature verification failed for %s: %w", uuid, err)
 	}
@@ -113,8 +113,8 @@ func PerformHandshake(ctx context.Context, conn net.Conn, db *database.PostgresH
 	}, nil
 }
 
-// verifyRobotSignature tries PEM first, then raw hex Ed25519.
-func verifyRobotSignature(publicKey, nonce, signature string) error {
+// VerifyRobotSignature tries PEM first, then raw hex Ed25519.
+func VerifyRobotSignature(publicKey, nonce, signature string) error {
 	// Try PEM-encoded key first
 	err := VerifySignature(publicKey, nonce, signature)
 	if err == nil {

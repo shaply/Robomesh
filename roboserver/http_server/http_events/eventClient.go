@@ -1,7 +1,6 @@
 package http_events
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -80,11 +79,9 @@ func (client *EventsClient) validateSessionLoop() {
 }
 
 func (client *EventsClient) cleanup() {
-	if client.ended.Load() {
-		shared.DebugError(fmt.Errorf("client already ended, cannot cleanup again"))
+	if !client.ended.CompareAndSwap(false, true) {
 		return
 	}
-	client.ended.Store(true)
 	utils.SafeCloseChannel(client.done)
 	utils.SafeClose(client.msgQueue)
 	client.manager.clients.Delete(client.Session)
@@ -123,38 +120,36 @@ func (client *EventsClient) ReadMsgQueue() {
 	}
 }
 
-// sendSSEEvent sends a properly formatted SSE event with optional event ID
+// sendSSEEvent sends a properly formatted SSE event with optional event ID.
+// Events are sent as a single JSON object on the SSE data line.
 func (client *EventsClient) sendSSEEvent(eventType string, data interface{}, id string) {
-	// Check if client has ended before sending
 	if client.ended.Load() {
 		shared.DebugError(fmt.Errorf("client %v has ended, cannot send SSE event %s", client.Session, eventType))
 		return
 	}
 
-	// Convert to JSON
-	jsonData, err := json.Marshal(data)
+	// Marshal event data to JSON string
+	dataJSON, err := json.Marshal(data)
 	if err != nil {
 		shared.DebugError(fmt.Errorf("failed to marshal event: %v", err))
 		return
 	}
 
-	// Base64 encode to make it completely safe for SSE
-	encodedEventData := base64.StdEncoding.EncodeToString(jsonData)
+	// Build the SSE event as a single JSON envelope
+	eventStruct := SentEvent{
+		Id:   id,
+		Type: eventType,
+		Data: string(dataJSON),
+	}
 
-	var eventStruct SentEvent
-	eventStruct.Id = id
-	eventStruct.Type = eventType
-	eventStruct.EncodedData = encodedEventData
-
-	jsonData, err = json.Marshal(eventStruct)
+	envelopeJSON, err := json.Marshal(eventStruct)
 	if err != nil {
 		shared.DebugError(fmt.Errorf("failed to marshal event struct: %v", err))
 		return
 	}
-	encodedData := base64.StdEncoding.EncodeToString(jsonData)
-	fmt.Fprintf(client.Writer, "data: %s\n\n", encodedData)
 
-	// Flush immediately
+	fmt.Fprintf(client.Writer, "data: %s\n\n", envelopeJSON)
+
 	if flusher, ok := client.Writer.(http.Flusher); ok {
 		flusher.Flush()
 	} else {

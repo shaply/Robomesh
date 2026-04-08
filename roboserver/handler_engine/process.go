@@ -380,8 +380,6 @@ func (hp *HandlerProcess) routeEnvelope(ctx context.Context, env *JSONRPCEnvelop
 }
 
 func (hp *HandlerProcess) handleDatabaseRequest(ctx context.Context, env *JSONRPCEnvelope) {
-	// For now, forward the raw query concept. Handlers can request data via
-	// method names like "get_robot", "query", etc. This is extensible.
 	switch env.Method {
 	case "get_robot":
 		uuid, ok := env.Data.(string)
@@ -395,6 +393,90 @@ func (hp *HandlerProcess) handleDatabaseRequest(ctx context.Context, env *JSONRP
 			return
 		}
 		hp.sendResponse(env.ID, robot, "")
+
+	case "list_robots":
+		robots, err := hp.db.GetAllRobots(ctx)
+		if err != nil {
+			hp.sendResponse(env.ID, nil, err.Error())
+			return
+		}
+		hp.sendResponse(env.ID, robots, "")
+
+	case "get_robots_by_type":
+		deviceType, ok := env.Data.(string)
+		if !ok {
+			hp.sendResponse(env.ID, nil, "data must be a device type string")
+			return
+		}
+		robots, err := hp.db.GetRobotsByType(ctx, deviceType)
+		if err != nil {
+			hp.sendResponse(env.ID, nil, err.Error())
+			return
+		}
+		hp.sendResponse(env.ID, robots, "")
+
+	case "store_data":
+		params, ok := env.Data.(map[string]interface{})
+		if !ok {
+			hp.sendResponse(env.ID, nil, "data must be an object with 'key' and 'value' fields")
+			return
+		}
+		key, _ := params["key"].(string)
+		if key == "" {
+			hp.sendResponse(env.ID, nil, "key is required")
+			return
+		}
+		value, err := json.Marshal(params["value"])
+		if err != nil {
+			hp.sendResponse(env.ID, nil, "failed to marshal value")
+			return
+		}
+		// Store in Redis with handler-scoped key
+		if hp.rds != nil {
+			redisKey := fmt.Sprintf("handler:%s:data:%s", hp.UUID, key)
+			if err := hp.rds.Client.Set(ctx, redisKey, value, 0).Err(); err != nil {
+				hp.sendResponse(env.ID, nil, err.Error())
+				return
+			}
+		}
+		hp.sendResponse(env.ID, "stored", "")
+
+	case "get_data":
+		key, ok := env.Data.(string)
+		if !ok {
+			hp.sendResponse(env.ID, nil, "data must be a key string")
+			return
+		}
+		if hp.rds != nil {
+			redisKey := fmt.Sprintf("handler:%s:data:%s", hp.UUID, key)
+			val, err := hp.rds.Client.Get(ctx, redisKey).Result()
+			if err != nil {
+				hp.sendResponse(env.ID, nil, err.Error())
+				return
+			}
+			// Return the raw JSON value
+			var parsed interface{}
+			if json.Unmarshal([]byte(val), &parsed) == nil {
+				hp.sendResponse(env.ID, parsed, "")
+			} else {
+				hp.sendResponse(env.ID, val, "")
+			}
+		} else {
+			hp.sendResponse(env.ID, nil, "redis not available")
+		}
+
+	case "delete_data":
+		key, ok := env.Data.(string)
+		if !ok {
+			hp.sendResponse(env.ID, nil, "data must be a key string")
+			return
+		}
+		if hp.rds != nil {
+			redisKey := fmt.Sprintf("handler:%s:data:%s", hp.UUID, key)
+			hp.rds.Client.Del(ctx, redisKey)
+		}
+		hp.sendResponse(env.ID, "deleted", "")
+
 	default:
 		hp.sendResponse(env.ID, nil, "unknown database method: "+env.Method)
 	}

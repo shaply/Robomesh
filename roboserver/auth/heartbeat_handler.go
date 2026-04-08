@@ -38,10 +38,10 @@ func ProcessHeartbeat(ctx context.Context, uuid, payloadJSON, signature, ip stri
 	}
 
 	// Verify the signature over the payload.
-	// verifyRobotSignature expects hex-encoded data (for AUTH nonces), so we
+	// VerifyRobotSignature expects hex-encoded data (for AUTH nonces), so we
 	// hex-encode the raw JSON bytes so they round-trip correctly.
 	payloadHex := hex.EncodeToString([]byte(payloadJSON))
-	if err := verifyRobotSignature(robot.PublicKey, payloadHex, signature); err != nil {
+	if err := VerifyRobotSignature(robot.PublicKey, payloadHex, signature); err != nil {
 		return nil, fmt.Errorf("invalid heartbeat signature for %s: %w", uuid, err)
 	}
 

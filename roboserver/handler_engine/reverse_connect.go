@@ -227,7 +227,10 @@ func (hp *HandlerProcess) reverseConnectUDP(ctx context.Context, requestID, addr
 
 	hp.sendResponse(requestID, "connected", "")
 
-	// Read loop for incoming UDP messages
+	// Read loop for incoming UDP messages.
+	// Use a short read deadline (1s) to periodically check context cancellation.
+	// On timeout we loop back and re-check ctx.Done(); on real errors we break.
+	const udpPollInterval = 1 * time.Second
 	buf := make([]byte, 65535)
 	for {
 		select {
@@ -236,7 +239,7 @@ func (hp *HandlerProcess) reverseConnectUDP(ctx context.Context, requestID, addr
 		default:
 		}
 
-		conn.SetReadDeadline(time.Now().Add(shared.AppConfig.Timeouts.HandshakeTimeout()))
+		conn.SetReadDeadline(time.Now().Add(udpPollInterval))
 		n, err := conn.Read(buf)
 		if err != nil {
 			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {

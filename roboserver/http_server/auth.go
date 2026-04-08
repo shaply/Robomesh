@@ -86,6 +86,12 @@ func (h *HTTPServer_t) AuthRoutes(r chi.Router) {
 	r.Post("/logout", h.logoutHandler)
 	// Ticket endpoint requires valid JWT (header/cookie) — returns a short-lived single-use ticket for SSE
 	r.Post("/ticket", h.issueTicketHandler)
+
+	// Protected: password change (requires valid session)
+	r.Group(func(r chi.Router) {
+		r.Use(h.SessionValidationMiddleware)
+		r.Post("/password", h.changePasswordHandler)
+	})
 }
 
 func (h *HTTPServer_t) checkToken(w http.ResponseWriter, r *http.Request) {
@@ -115,6 +121,14 @@ func (h *HTTPServer_t) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewDecoder(r.Body).Decode(&loginReq); err != nil {
 		http.Error(w, "Invalid request format", http.StatusBadRequest)
+		return
+	}
+
+	// Reject excessively long passwords before bcrypt to prevent CPU DoS.
+	// bcrypt truncates at 72 bytes anyway, so anything longer is pointless.
+	if len(loginReq.Password) > 72 {
+		recordLoginAttempt(ip)
+		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
 		return
 	}
 
@@ -179,15 +193,6 @@ func (h *HTTPServer_t) logoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSONResponse(w, []byte(`{"status": "success", "message": "Logged out successfully"}`), http.StatusOK)
-}
-
-// GetSessionFromRequest extracts and validates a session from the request (JWT only, no Redis check).
-func GetSessionFromRequest(r *http.Request) *shared.Session {
-	token := extractRawToken(r)
-	if token == "" {
-		return nil
-	}
-	return parseSessionFromToken(token)
 }
 
 // validateSessionFull validates JWT and checks that the session still exists in Redis.
@@ -279,6 +284,67 @@ func (h *HTTPServer_t) issueTicketHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	sendResponseAsJSON(w, map[string]string{"ticket": ticket}, http.StatusOK)
+}
+
+// changePasswordHandler allows authenticated users to change their password.
+func (h *HTTPServer_t) changePasswordHandler(w http.ResponseWriter, r *http.Request) {
+	session := h.validateSessionFull(r)
+	if session == nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	var req struct {
+		CurrentPassword string `json:"current_password"`
+		NewPassword     string `json:"new_password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request format", http.StatusBadRequest)
+		return
+	}
+
+	if len(req.NewPassword) < 8 {
+		http.Error(w, "Password must be at least 8 characters", http.StatusBadRequest)
+		return
+	}
+	if len(req.NewPassword) > 72 {
+		http.Error(w, "Password must not exceed 72 characters", http.StatusBadRequest)
+		return
+	}
+
+	rds := h.db.Redis()
+	if rds == nil {
+		http.Error(w, "Service unavailable", http.StatusServiceUnavailable)
+		return
+	}
+
+	// Verify current password
+	user, err := rds.GetUser(r.Context(), session.UserID)
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.CurrentPassword)); err != nil {
+		http.Error(w, "Current password is incorrect", http.StatusUnauthorized)
+		return
+	}
+
+	// Hash new password and store
+	newHash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+		return
+	}
+
+	user.PasswordHash = string(newHash)
+	if err := rds.SetUser(r.Context(), user); err != nil {
+		http.Error(w, "Failed to update password", http.StatusInternalServerError)
+		return
+	}
+
+	shared.DebugPrint("AUTH: User %s changed password", session.UserID)
+	sendJSONResponse(w, []byte(`{"status":"success","message":"Password changed successfully"}`), http.StatusOK)
 }
 
 // validateTicket consumes a single-use ticket and returns a session.

@@ -13,10 +13,21 @@ import (
 
 func (h *HTTPServer_t) HandlerRoutes(r chi.Router) {
 	r.Get("/", h.listHandlers)
+	r.Get("/types", h.listHandlerTypes)
 	r.Get("/{uuid}", h.getHandlerStatus)
 	r.Post("/{uuid}/start", h.startHandler)
 	r.Post("/{uuid}/kill", h.killHandler)
 	// Log streaming moved to semi-public route with ticket-based auth (see http_server.go)
+}
+
+// listHandlerTypes returns all available handler types (device types with handler scripts).
+func (h *HTTPServer_t) listHandlerTypes(w http.ResponseWriter, r *http.Request) {
+	types := handler_engine.ListHandlerTypes()
+	if types == nil {
+		types = []string{}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(types)
 }
 
 // listHandlers returns all currently running handler processes.

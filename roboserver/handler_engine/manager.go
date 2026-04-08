@@ -71,29 +71,28 @@ func (m *handlerManager) FinishSpawning(uuid string) {
 }
 
 // Kill stops and removes a handler process by UUID.
+// Stop() handles both process cleanup and map unregistration.
 func (m *handlerManager) Kill(uuid string) error {
-	m.mu.Lock()
+	m.mu.RLock()
 	hp, ok := m.handlers[uuid]
+	m.mu.RUnlock()
 	if !ok {
-		m.mu.Unlock()
 		return fmt.Errorf("no handler running for robot %s", uuid)
 	}
-	delete(m.handlers, uuid)
-	m.mu.Unlock()
 
 	hp.Stop("killed")
 	return nil
 }
 
 // StopAll gracefully stops all running handlers.
+// Each Stop() call handles its own unregistration from the map.
 func (m *handlerManager) StopAll(reason string) {
-	m.mu.Lock()
-	handlers := make(map[string]*HandlerProcess, len(m.handlers))
-	for k, v := range m.handlers {
-		handlers[k] = v
+	m.mu.RLock()
+	handlers := make([]*HandlerProcess, 0, len(m.handlers))
+	for _, v := range m.handlers {
+		handlers = append(handlers, v)
 	}
-	m.handlers = make(map[string]*HandlerProcess)
-	m.mu.Unlock()
+	m.mu.RUnlock()
 
 	for _, hp := range handlers {
 		hp.Stop(reason)

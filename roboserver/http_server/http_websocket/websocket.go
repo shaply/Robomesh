@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"roboserver/comms"
+	"roboserver/handler_engine"
 	"roboserver/shared"
 	"sync"
 	"time"
@@ -27,7 +28,7 @@ var upgrader = websocket.Upgrader{
 
 // IncomingMessage is the JSON envelope for messages from the browser.
 type IncomingMessage struct {
-	Action string          `json:"action"` // "send_to_robot", "subscribe", "unsubscribe"
+	Action string          `json:"action"` // "send_to_robot", "send_to_handler", "subscribe", "unsubscribe"
 	UUID   string          `json:"uuid,omitempty"`
 	Event  string          `json:"event,omitempty"`
 	Data   json.RawMessage `json:"data,omitempty"`
@@ -171,6 +172,10 @@ func (c *WSClient) handleMessage(msg *IncomingMessage) {
 		c.subscribe(msg.Event)
 	case "unsubscribe":
 		c.unsubscribe(msg.Event)
+	case "send_to_robot":
+		c.sendToRobot(msg.UUID, msg.Data)
+	case "send_to_handler":
+		c.sendToHandler(msg.UUID, msg.Data)
 	default:
 		c.sendError("unknown action: " + msg.Action)
 	}
@@ -209,6 +214,50 @@ func (c *WSClient) unsubscribe(eventType string) {
 	c.cancelMu.Unlock()
 
 	c.sendAck("unsubscribed from " + eventType)
+}
+
+// sendToRobot forwards a message from the WebSocket client to a robot's handler,
+// which then sends it to the robot via its TCP/MQTT connection.
+func (c *WSClient) sendToRobot(uuid string, data json.RawMessage) {
+	if uuid == "" {
+		c.sendError("uuid required")
+		return
+	}
+
+	hp, ok := handler_engine.HandlerManager.Get(uuid)
+	if !ok {
+		c.sendError("no handler running for robot: " + uuid)
+		return
+	}
+
+	if hp.RobotSend == nil {
+		c.sendError("robot not connected: " + uuid)
+		return
+	}
+
+	if err := hp.RobotSend(data); err != nil {
+		c.sendError("failed to send to robot: " + err.Error())
+		return
+	}
+
+	c.sendAck("sent to robot " + uuid)
+}
+
+// sendToHandler forwards a message from the WebSocket client to a robot's handler process.
+func (c *WSClient) sendToHandler(uuid string, data json.RawMessage) {
+	if uuid == "" {
+		c.sendError("uuid required")
+		return
+	}
+
+	hp, ok := handler_engine.HandlerManager.Get(uuid)
+	if !ok {
+		c.sendError("no handler running for robot: " + uuid)
+		return
+	}
+
+	hp.SendIncoming(string(data))
+	c.sendAck("sent to handler " + uuid)
 }
 
 func (c *WSClient) sendEvent(eventType string, data any) {

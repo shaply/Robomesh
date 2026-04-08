@@ -11,6 +11,7 @@ import (
 func (h *HTTPServer_t) RobotRoutes(r chi.Router) {
 	r.Get("/", h.getActiveRobots)
 	r.Get("/{uuid}", h.getRobotDetail)
+	r.Post("/{uuid}/message", h.sendRobotMessage)
 }
 
 // getActiveRobots returns all currently active robots from Redis.
@@ -91,4 +92,32 @@ func (h *HTTPServer_t) getRobotDetail(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
+}
+
+// sendRobotMessage forwards a message from the HTTP API to a robot's handler process.
+// The handler receives it as an incoming message on stdin.
+func (h *HTTPServer_t) sendRobotMessage(w http.ResponseWriter, r *http.Request) {
+	uuid := chi.URLParam(r, "uuid")
+
+	var body struct {
+		Message string `json:"message"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	hp, ok := handler_engine.HandlerManager.Get(uuid)
+	if !ok {
+		http.Error(w, "No handler running for this robot", http.StatusNotFound)
+		return
+	}
+
+	hp.SendIncoming(body.Message)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "sent",
+		"uuid":   uuid,
+	})
 }

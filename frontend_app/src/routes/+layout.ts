@@ -20,8 +20,8 @@ export async function load({ url, fetch }) {
 
         // Validate token with backend on initial page load
         try {
-            const { PUBLIC_BACKEND_IP, PUBLIC_BACKEND_PORT } = await import('$env/static/public');
-            const response = await fetch(`http://${PUBLIC_BACKEND_IP}:${PUBLIC_BACKEND_PORT}/auth`, {
+            const { backendBaseUrl } = await import('$lib/backend/fetch.js');
+            const response = await fetch(`${backendBaseUrl()}/auth`, {
                 method: 'GET',
                 headers: { 'Authorization': `Bearer ${authToken}` },
             });

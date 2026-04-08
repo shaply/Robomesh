@@ -1,17 +1,20 @@
 <script lang="ts">
-    export let variant: 'primary' | 'secondary' | 'danger' = 'primary';
-    export let disabled: boolean = false;
-    export let type: 'button' | 'submit' | 'reset' = 'button';
+    import type { Snippet } from 'svelte';
+    import type { HTMLButtonAttributes } from 'svelte/elements';
+
+    interface Props extends HTMLButtonAttributes {
+        variant?: 'primary' | 'secondary' | 'danger';
+        children?: Snippet;
+    }
+
+    let { variant = 'primary', children, ...rest }: Props = $props();
 </script>
 
 <button
     class="btn btn-{variant}"
-    {disabled}
-    {type}
-    on:click
-    {...$$restProps}
+    {...rest}
 >
-    <slot></slot>
+    {@render children?.()}
 </button>
 
 <style>

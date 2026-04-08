@@ -1,7 +1,6 @@
 import { browser } from '$app/environment';
-import { PUBLIC_BACKEND_IP, PUBLIC_BACKEND_PORT } from '$env/static/public';
 import { SSE_SESSION_ID_EVENT } from '$lib/const.js';
-import { fetchBackend } from '../fetch.js';
+import { fetchBackend, backendBaseUrl } from '../fetch.js';
 import type { EventMap, EventHandler, EventData, SentEvent } from './types.js';
 
 interface QueuedOperation {
@@ -183,7 +182,7 @@ class EventSourceManager {
         const eventTypes = Array.from(this.eventMap.keys());
         const eventParam = `events=${eventTypes.map(event => encodeURIComponent(event)).join(',')}`;
         const url = `/events?${eventParam}&ticket=${encodeURIComponent(ticket)}`;
-        const fullUrl = `http://${PUBLIC_BACKEND_IP}:${PUBLIC_BACKEND_PORT}${url}`;
+        const fullUrl = `${backendBaseUrl()}${url}`;
 
         if (import.meta.env.DEV) console.log('Connecting EventSource with events:', eventTypes);
 
@@ -242,21 +241,12 @@ class EventSourceManager {
 
     private handleEvent(event: MessageEvent): void {
         try {
-            let decodedData: string;
-            try {
-                // Try base64 decode first
-                decodedData = atob(event.data);
-            } catch {
-                // Fall back to direct JSON parse
-                decodedData = event.data;
-            }
-            const sentEvent = JSON.parse(decodedData) as SentEvent;
+            const sentEvent = JSON.parse(event.data) as SentEvent;
 
-            // Decode and sanitize event data — strip HTML tags to prevent XSS
-            const rawData = atob(sentEvent.encoded_data);
+            // Sanitize event data — strip HTML tags to prevent XSS
             const eventData: EventData = {
                 type: sentEvent.type,
-                data: EventSourceManager.stripHtmlTags(rawData),
+                data: EventSourceManager.stripHtmlTags(sentEvent.data),
                 timestamp: Date.now(),
                 id: sentEvent.id
             };
@@ -309,7 +299,6 @@ class EventSourceManager {
         }, 5000);
     }
 
-    // TODO: Change the way the eSess is received
     private handleEsessEvent(event: EventData): void {
         const data = JSON.parse(event.data);
         this.eSess = data || null;
@@ -321,10 +310,6 @@ class EventSourceManager {
         } else {
             this.processQueue();
         }
-    }
-
-    print_subscription(eventType: string): void {
-        console.log(`Subscribed to event: ${this.eventMap.get(eventType)?.length || 0} handlers for ${eventType}`);
     }
 }
 

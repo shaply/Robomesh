@@ -42,7 +42,7 @@ func (h *HTTPServer_t) handleHeartbeat(w http.ResponseWriter, r *http.Request) {
 	result, err := auth.ProcessHeartbeat(r.Context(), req.UUID, req.Payload, req.Signature, ip, pg, rds)
 	if err != nil {
 		shared.DebugPrint("HTTP heartbeat failed for %s: %v", req.UUID, err)
-		http.Error(w, err.Error(), http.StatusUnauthorized)
+		http.Error(w, "Heartbeat rejected", http.StatusUnauthorized)
 		return
 	}
 

@@ -6,14 +6,33 @@
   import type { BaseRobot } from "$lib/types.js";
   import { onMount, onDestroy } from "svelte";
 
-  let robots: BaseRobot[] = [];
-  let loading = true;
-  let error: string | null = null;
+  let robots = $state<BaseRobot[]>([]);
+  let loading = $state(true);
+  let error = $state<string | null>(null);
   let intervalId: number;
 
-  async function fetchRobots() {
+  let searchQuery = $state("");
+  let filterType = $state("");
+  let showFilters = $state(false);
+
+  let deviceTypes = $derived([...new Set(robots.map((r) => r.robot_type))].sort());
+
+  let filteredRobots = $derived(robots.filter((robot) => {
+    const matchesSearch =
+      searchQuery === "" ||
+      robot.device_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      robot.robot_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      robot.ip?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      robot.name?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesType = filterType === "" || robot.robot_type === filterType;
+
+    return matchesSearch && matchesType;
+  }));
+
+  async function fetchRobots(showLoading = true) {
     try {
-      loading = true;
+      if (showLoading) loading = true;
       error = null;
       const response = await getRobots();
       if (!response) {
@@ -31,7 +50,7 @@
 
   onMount(() => {
     fetchRobots();
-    intervalId = setInterval(fetchRobots, 60000);
+    intervalId = setInterval(() => fetchRobots(false), 60000);
   });
 
   onDestroy(() => {
@@ -43,6 +62,12 @@
   function refreshRobots() {
     fetchRobots();
   }
+
+  function clearFilters() {
+    searchQuery = "";
+    filterType = "";
+    showFilters = false;
+  }
 </script>
 
 <div class="page">
@@ -53,14 +78,35 @@
 
   <div class="toolbar">
     <div class="search-area">
-      <SearchBar></SearchBar>
+      <SearchBar
+        placeholder="Search by name, UUID, IP, or type..."
+        onChange={(value) => (searchQuery = value)}
+      ></SearchBar>
     </div>
     <div class="toolbar-actions">
-      <PageButton>Search</PageButton>
-      <PageButton>Filter+</PageButton>
-      <PageButton on:click={refreshRobots} variant="secondary">Refresh</PageButton>
+      <PageButton onclick={() => (showFilters = !showFilters)}>
+        {showFilters ? "Hide Filters" : "Filter+"}
+      </PageButton>
+      {#if searchQuery || filterType}
+        <PageButton onclick={clearFilters} variant="secondary">Clear</PageButton>
+      {/if}
+      <PageButton onclick={refreshRobots} variant="secondary">Refresh</PageButton>
     </div>
   </div>
+
+  {#if showFilters}
+    <div class="filter-bar">
+      <label class="filter-group">
+        <span class="filter-label">Device Type</span>
+        <select class="filter-select" bind:value={filterType}>
+          <option value="">All Types</option>
+          {#each deviceTypes as type}
+            <option value={type}>{type}</option>
+          {/each}
+        </select>
+      </label>
+    </div>
+  {/if}
 
   <div class="cards-area">
     {#if loading}
@@ -75,9 +121,19 @@
         <span class="empty-label">No robots connected</span>
         <span class="empty-hint">Robots will appear here when they connect via TCP</span>
       </div>
+    {:else if filteredRobots.length === 0}
+      <div class="state-message">
+        <span class="empty-label">No matching robots</span>
+        <span class="empty-hint">Try adjusting your search or filter criteria</span>
+      </div>
     {:else}
+      {#if searchQuery || filterType}
+        <div class="result-count">
+          Showing {filteredRobots.length} of {robots.length} robots
+        </div>
+      {/if}
       <div class="cards-grid">
-        {#each robots as robot (robot.device_id)}
+        {#each filteredRobots as robot (robot.device_id)}
           <RobotCard {robot} />
         {/each}
       </div>
@@ -112,7 +168,7 @@
     display: flex;
     align-items: center;
     gap: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
   }
 
   .search-area {
@@ -124,6 +180,48 @@
     display: flex;
     align-items: center;
     gap: 0.35rem;
+  }
+
+  .filter-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .filter-label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+
+  .filter-select {
+    padding: 0.35rem 0.65rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    outline: none;
+  }
+
+  .filter-select:focus {
+    border-color: var(--accent);
+  }
+
+  .result-count {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
   }
 
   .cards-area {
@@ -198,6 +296,10 @@
 
     .cards-area {
       padding: 0.75rem;
+    }
+
+    .filter-bar {
+      flex-direction: column;
     }
   }
 </style>

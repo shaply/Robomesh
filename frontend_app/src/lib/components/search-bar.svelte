@@ -1,7 +1,11 @@
 <script lang="ts">
-    export let placeholder: string = "Search robots...";
-    export let defaultValue: string = "";
-    export let onChange: (value: string) => void = () => {};
+    interface Props {
+        placeholder?: string;
+        defaultValue?: string;
+        onChange?: (value: string) => void;
+    }
+
+    let { placeholder = "Search robots...", defaultValue = "", onChange = () => {} }: Props = $props();
 </script>
 
 <div class="search-wrapper">
@@ -10,10 +14,9 @@
     </svg>
     <input
         class="search-input"
-        placeholder="{placeholder}"
-        bind:value="{defaultValue}"
-        on:input="{(e) => onChange((e.target as HTMLInputElement)?.value ?? '')}"
-        {...$$restProps}
+        {placeholder}
+        bind:value={defaultValue}
+        oninput={(e) => onChange((e.target as HTMLInputElement)?.value ?? '')}
     >
 </div>
 

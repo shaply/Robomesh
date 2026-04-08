@@ -1,4 +1,4 @@
-import { PUBLIC_BACKEND_IP, PUBLIC_BACKEND_PORT } from "$env/static/public";
+import { backendBaseUrl } from "$lib/backend/fetch.js";
 
 const pluginCache = new Map<string, { module: any; loadedAt: number }>();
 const PLUGIN_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
@@ -7,7 +7,7 @@ const PLUGIN_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
  * Returns the base URL for plugin assets.
  */
 function pluginBaseUrl(robotType: string): string {
-    return `http://${PUBLIC_BACKEND_IP}:${PUBLIC_BACKEND_PORT}/plugins/${robotType}`;
+    return `${backendBaseUrl()}/plugins/${robotType}`;
 }
 
 /**
@@ -48,7 +48,7 @@ export async function loadPluginComponent(
 export async function getAvailablePlugins(): Promise<string[]> {
     try {
         const res = await fetch(
-            `http://${PUBLIC_BACKEND_IP}:${PUBLIC_BACKEND_PORT}/plugins/`
+            `${backendBaseUrl()}/plugins/`
         );
         if (!res.ok) return [];
         return await res.json();

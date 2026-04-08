@@ -31,13 +31,16 @@ func (h *eventBusBridgeHook) OnPublished(cl *mqtt.Client, pk packets.Packet) {
 	topic := pk.TopicName
 	payload := string(pk.Payload)
 
-	// Forward MQTT messages with "robomesh/" prefix to the internal event bus
-	const prefix = "robomesh/"
+	// Only forward application-level messages to the event bus.
+	// Protocol topics (auth, heartbeat) contain sensitive data (nonces,
+	// signatures, JWTs) and are handled by the protocolHook — they must
+	// not leak onto the general event bus.
+	const prefix = "robomesh/message/"
 	if len(topic) > len(prefix) && topic[:len(prefix)] == prefix {
 		eventType := topic[len(prefix):]
 		if h.bus != nil {
-			h.bus.PublishEvent(eventType, payload)
-			shared.DebugPrint("MQTT→EventBus: %s → %s", topic, eventType)
+			h.bus.PublishEvent("mqtt.message."+eventType, payload)
+			shared.DebugPrint("MQTT→EventBus: %s → mqtt.message.%s", topic, eventType)
 		}
 	}
 }

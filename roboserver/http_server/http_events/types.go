@@ -2,11 +2,6 @@ package http_events
 
 import "roboserver/shared"
 
-type Message struct {
-	Type string
-	Data *interface{}
-}
-
 type EventSession struct {
 	Session   shared.Session `json:"session"`
 	Timestamp int64          `json:"timestamp"`
@@ -18,8 +13,10 @@ type EventStruct struct {
 	EventTypes []string     `json:"event_types"`
 }
 
+// SentEvent is the JSON envelope sent over SSE.
+// Data contains JSON-encoded event data as a string.
 type SentEvent struct {
-	Id          string `json:"id"`
-	Type        string `json:"type"`
-	EncodedData string `json:"encoded_data"`
+	Id   string `json:"id"`
+	Type string `json:"type"`
+	Data string `json:"data"`
 }
