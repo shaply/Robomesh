@@ -19,32 +19,13 @@ func (eb *EventBus_t) Subscribe(eventType string, subscriber *Subscriber, handle
 		subscriber = NewSubscriber()
 	}
 
-	// Store the handler function
+	// Store the handler function — GetOrDefault returns the existing or newly-inserted map,
+	// then we set the handler on it. No retry loop needed: if a concurrent Unsubscribe
+	// removes the entry, re-subscribing is the caller's responsibility.
 	eb.handlers.GetOrDefault(*subscriber, data_structures.NewSafeMap[string, SubscriberHandler]()).Set(eventType, handler)
-
-	// Ensure the handler was actually set (retry logic)
-	for {
-		handlers := eb.handlers.GetOrDefault(*subscriber, data_structures.NewSafeMap[string, SubscriberHandler]())
-
-		if _, exists := handlers.Get(eventType); exists {
-			break // Handler successfully set
-		}
-
-		// Handler not found, try setting again
-		handlers.Set(eventType, handler)
-	}
 
 	// Add subscriber to set
 	eb.subscriptions.GetOrDefault(eventType, data_structures.NewSafeSet[Subscriber]()).Add(*subscriber)
-
-	// Ensure the subscriber is stored
-	for {
-		subscribers := eb.subscriptions.GetOrDefault(eventType, data_structures.NewSafeSet[Subscriber]())
-		if exists := subscribers.Contains(*subscriber); exists {
-			break // Subscriber successfully added
-		}
-		subscribers.Add(*subscriber) // Retry adding subscriber
-	}
 
 	return subscriber
 }

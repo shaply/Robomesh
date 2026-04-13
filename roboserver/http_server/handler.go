@@ -101,7 +101,7 @@ func (h *HTTPServer_t) startHandler(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		shared.DebugPrint("Failed to start handler for %s: %v", uuid, err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Failed to start handler", http.StatusInternalServerError)
 		return
 	}
 

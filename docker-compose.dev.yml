@@ -38,7 +38,7 @@ services:
     build: ./roboserver
     ports:
       - "8080:8080"
-      - "5001:5000"
+      - "5001:5002"
       - "6001:6000"
     environment:
       - DEBUG=true

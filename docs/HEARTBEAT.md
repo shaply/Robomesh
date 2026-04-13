@@ -23,7 +23,23 @@ Content-Type: application/json
 {"uuid": "...", "payload": "<payloadJSON>", "signature": "<signatureHex>"}
 ```
 
-Both transports are public (no JWT required) — the signature itself authenticates the robot.
+**UDP format:**
+
+```json
+{"type":"heartbeat","uuid":"...","payload":{"seq":1},"signature":"<hex>"}
+```
+
+Note: UDP `payload` is a **JSON object** (raw `json.RawMessage`), not a string.
+
+**MQTT format** (published to `robomesh/heartbeat/{uuid}`):
+
+```json
+{"payload":"{\"seq\":1}","signature":"<hex>"}
+```
+
+Note: MQTT `payload` is a **JSON string** containing the serialized payload.
+
+All transports are public (no JWT required) — the signature itself authenticates the robot.
 
 ## Payload
 
@@ -80,3 +96,5 @@ When enabled, heartbeats arrive on stdin as:
 
 - **TCP:** `HEARTBEAT_OK` on success, `ERROR <reason>` on failure.
 - **HTTP:** `200 OK` with `{"status": "ok"}` on success, `4xx`/`5xx` with error message on failure.
+- **UDP:** `{"type":"heartbeat_response","status":"ok"}` on success, `{"type":"heartbeat_response","status":"error","error":"..."}` on failure.
+- **MQTT:** `{"status":"ok"}` published to `robomesh/heartbeat/{uuid}/response`.

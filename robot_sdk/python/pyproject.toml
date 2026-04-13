@@ -8,8 +8,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+mqtt = [
+    "paho-mqtt>=2.0",
+]
+all = [
+    "paho-mqtt>=2.0",
+]
 dev = [
     "pytest>=7.0",
+    "paho-mqtt>=2.0",
 ]
 
 [build-system]

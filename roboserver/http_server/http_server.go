@@ -48,6 +48,7 @@ func Start(ctx context.Context, bus comms.Bus, db database.DBManager) error {
 		// Global middleware
 		s.router.Use(s.LoggingMiddleware)
 		s.router.Use(s.CORSMiddleware)
+		s.router.Use(s.BodySizeLimitMiddleware)
 
 		// Public routes
 		s.router.Route("/auth", s.AuthRoutes)
@@ -135,6 +136,16 @@ func (s *HTTPServer_t) SessionValidationMiddleware(next http.Handler) http.Handl
 func (s *HTTPServer_t) LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		shared.DebugPrint("%s %s from %s", r.Method, r.URL.Path, shared.RedactIP(r.RemoteAddr))
+		next.ServeHTTP(w, r)
+	})
+}
+
+// BodySizeLimitMiddleware caps request bodies to prevent memory exhaustion
+// from oversized payloads. Applied globally; individual handlers can set
+// tighter limits as needed.
+func (s *HTTPServer_t) BodySizeLimitMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		r.Body = http.MaxBytesReader(w, r.Body, maxRequestBodySize)
 		next.ServeHTTP(w, r)
 	})
 }

@@ -13,7 +13,7 @@ Usage:
     python test_robot.py
 
     # Custom server:
-    ROBOMESH_HOST=192.168.1.50 ROBOMESH_TCP_PORT=5000 python test_robot.py
+    ROBOMESH_HOST=192.168.1.50 ROBOMESH_TCP_PORT=5002 python test_robot.py
 """
 
 import logging

@@ -15,7 +15,10 @@ import (
 func Start(ctx context.Context, bus comms.Bus, db database.DBManager, cancel context.CancelFunc) error {
 	port := shared.AppConfig.Server.TerminalPort
 
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	// Bind to localhost only — the terminal has no authentication and provides
+	// full admin access (shutdown, accept/reject registrations, list robots).
+	// Exposing it on all interfaces would be a critical security issue.
+	listener, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", port))
 	if err != nil {
 		return fmt.Errorf("error starting terminal server: %w", err)
 	}

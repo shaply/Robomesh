@@ -1,6 +1,6 @@
 # TCP Protocol
 
-Robots connect via TCP (default port 5000) and send either `AUTH` (pre-registered) or `REGISTER` (new robot). Both flows end in an authenticated session where the handler script is spawned.
+Robots connect via TCP (default port 5002) and send either `AUTH` (pre-registered) or `REGISTER` (new robot). Both flows end in an authenticated session where the handler script is spawned.
 
 Line-based protocol with a maximum message size of 64KB.
 
@@ -95,4 +95,6 @@ After AUTH or REGISTER succeeds, the connection enters session mode:
 
 ## Error Format
 
-All errors follow: `ERROR <CODE> [detail]`
+All errors follow: `ERROR <CODE>`
+
+Error codes are generic identifiers (e.g., `HANDLER_SPAWN_FAILED`, `HEARTBEAT_REJECTED`). Internal error details are logged server-side only and never sent to the client.

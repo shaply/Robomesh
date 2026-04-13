@@ -314,7 +314,7 @@ robomesh_client_t *robomesh_client_create(const robomesh_config_t *config) {
 
     strncpy(c->uuid, config->uuid, sizeof(c->uuid) - 1);
     strncpy(c->host, config->host, sizeof(c->host) - 1);
-    c->tcp_port = config->tcp_port > 0 ? config->tcp_port : 5000;
+    c->tcp_port = config->tcp_port > 0 ? config->tcp_port : 5002;
     if (config->device_type)
         strncpy(c->device_type, config->device_type, sizeof(c->device_type) - 1);
     memcpy(&c->keypair, config->keypair, sizeof(robomesh_keypair_t));

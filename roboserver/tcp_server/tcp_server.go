@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"regexp"
 	"roboserver/auth"
 	"roboserver/comms"
 	"roboserver/database"
@@ -16,12 +15,6 @@ import (
 	"strings"
 	"time"
 )
-
-var validDeviceTypeRe = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,64}$`)
-
-func isValidDeviceType(dt string) bool {
-	return validDeviceTypeRe.MatchString(dt)
-}
 
 // MaxTCPMessageSize is the maximum allowed size for a single TCP message line.
 // Prevents memory exhaustion from maliciously large payloads.
@@ -131,6 +124,22 @@ func (s *TCPServer_t) handleConnection(conn net.Conn) {
 	}
 }
 
+// readHandshakeInput sends a prompt to the robot, waits for a response with a timeout, and returns the trimmed response.
+func (s *TCPServer_t) readHandshakeInput(conn net.Conn, scanner *bufio.Scanner, prompt string, emptyError string) (string, bool) {
+	conn.Write([]byte(prompt + "\n"))
+	conn.SetReadDeadline(time.Now().Add(shared.AppConfig.Timeouts.HandshakeTimeout()))
+	if !scanner.Scan() {
+		return "", false
+	}
+	val := strings.TrimSpace(scanner.Text())
+	if val == "" {
+		conn.Write([]byte("ERROR " + emptyError + "\n"))
+		return "", false
+	}
+	return val, true
+}
+
+
 // handleAuthAndSession performs the cryptographic handshake against PostgreSQL,
 // spawns a handler process, and enters session mode.
 func (s *TCPServer_t) handleAuthAndSession(conn net.Conn, scanner *bufio.Scanner) {
@@ -182,14 +191,8 @@ func (s *TCPServer_t) handleRegisterAndSession(conn net.Conn, scanner *bufio.Sca
 	ip := conn.RemoteAddr().(*net.TCPAddr).IP.String()
 
 	// Step 1: Collect UUID
-	conn.Write([]byte("REGISTER_CHALLENGE\n"))
-	conn.SetReadDeadline(time.Now().Add(shared.AppConfig.Timeouts.HandshakeTimeout()))
-	if !scanner.Scan() {
-		return
-	}
-	uuid := strings.TrimSpace(scanner.Text())
-	if uuid == "" {
-		conn.Write([]byte("ERROR EMPTY_UUID\n"))
+	uuid, ok := s.readHandshakeInput(conn, scanner, "REGISTER_CHALLENGE", "EMPTY_UUID")
+	if !ok {
 		return
 	}
 
@@ -214,30 +217,18 @@ func (s *TCPServer_t) handleRegisterAndSession(conn net.Conn, scanner *bufio.Sca
 	}
 
 	// Step 2: Collect device type
-	conn.Write([]byte("SEND_DEVICE_TYPE\n"))
-	conn.SetReadDeadline(time.Now().Add(shared.AppConfig.Timeouts.HandshakeTimeout()))
-	if !scanner.Scan() {
+	deviceType, ok := s.readHandshakeInput(conn, scanner, "SEND_DEVICE_TYPE", "EMPTY_DEVICE_TYPE")
+	if !ok {
 		return
 	}
-	deviceType := strings.TrimSpace(scanner.Text())
-	if deviceType == "" {
-		conn.Write([]byte("ERROR EMPTY_DEVICE_TYPE\n"))
-		return
-	}
-	if !isValidDeviceType(deviceType) {
+	if !handler_engine.IsValidDeviceType(deviceType) {
 		conn.Write([]byte("ERROR INVALID_DEVICE_TYPE\n"))
 		return
 	}
 
 	// Step 3: Collect public key
-	conn.Write([]byte("SEND_PUBLIC_KEY\n"))
-	conn.SetReadDeadline(time.Now().Add(shared.AppConfig.Timeouts.HandshakeTimeout()))
-	if !scanner.Scan() {
-		return
-	}
-	publicKey := strings.TrimSpace(scanner.Text())
-	if publicKey == "" {
-		conn.Write([]byte("ERROR EMPTY_PUBLIC_KEY\n"))
+	publicKey, ok := s.readHandshakeInput(conn, scanner, "SEND_PUBLIC_KEY", "EMPTY_PUBLIC_KEY")
+	if !ok {
 		return
 	}
 
@@ -256,7 +247,7 @@ func (s *TCPServer_t) handleRegisterAndSession(conn net.Conn, scanner *bufio.Sca
 	pendingTTL := 5 * time.Minute // Pending registrations expire after 5 minutes
 	if err := rds.SetPendingRobot(s.main_context, pending, pendingTTL); err != nil {
 		shared.DebugPrint("Failed to store pending robot %s: %v", uuid, err)
-		conn.Write([]byte(fmt.Sprintf("ERROR %v\n", err)))
+		conn.Write([]byte("ERROR REGISTRATION_FAILED\n"))
 		return
 	}
 
@@ -316,7 +307,9 @@ func (s *TCPServer_t) handleRegisterAndSession(conn net.Conn, scanner *bufio.Sca
 	}
 
 	// Store public key in Redis so PERSIST can copy it to PostgreSQL later
-	rds.SetRobotPublicKey(s.main_context, uuid, publicKey, ttl)
+	if err := rds.SetRobotPublicKey(s.main_context, uuid, publicKey, ttl); err != nil {
+		shared.DebugPrint("Failed to store public key for %s: %v", uuid, err)
+	}
 
 	conn.Write([]byte(fmt.Sprintf("REGISTER_OK %s\n", jwt)))
 	shared.DebugPrint("Robot %s registration accepted, entering session mode", uuid)
@@ -352,7 +345,7 @@ func (s *TCPServer_t) enterSessionMode(conn net.Conn, scanner *bufio.Scanner, re
 		existing.Reattach(robotSend, result.IP, result.SessionID)
 		hp = existing
 		shared.DebugPrint("Robot %s reconnected, reattached to existing handler (PID %d)", result.UUID, hp.PID)
-	} else {
+	} else if handler_engine.HandlerManager.TryStartSpawning(result.UUID) {
 		var err error
 		hp, err = handler_engine.SpawnHandlerProcess(
 			s.main_context,
@@ -360,13 +353,25 @@ func (s *TCPServer_t) enterSessionMode(conn net.Conn, scanner *bufio.Scanner, re
 			pg, rds, s.bus,
 			robotSend,
 		)
+		handler_engine.HandlerManager.FinishSpawning(result.UUID)
 		if err != nil {
 			shared.DebugPrint("Failed to spawn handler for %s: %v", result.UUID, err)
-			conn.Write([]byte(fmt.Sprintf("ERROR HANDLER_FAILED %v\n", err)))
+			conn.Write([]byte("ERROR HANDLER_SPAWN_FAILED\n"))
 			rds.RemoveActiveRobot(s.main_context, result.UUID)
 			return
 		}
 		shared.DebugPrint("Handler spawned (PID %d) for robot %s, entering session mode", hp.PID, result.UUID)
+	} else {
+		// Another connection is currently spawning this handler — wait briefly then reattach
+		shared.DebugPrint("Handler for %s is being spawned by another connection, waiting...", result.UUID)
+		time.Sleep(2 * time.Second)
+		if existing, ok := handler_engine.HandlerManager.Get(result.UUID); ok {
+			existing.Reattach(robotSend, result.IP, result.SessionID)
+			hp = existing
+		} else {
+			conn.Write([]byte("ERROR HANDLER_UNAVAILABLE\n"))
+			return
+		}
 	}
 
 	persisted := isPersisted
@@ -441,7 +446,7 @@ func (s *TCPServer_t) handleHeartbeat(conn net.Conn, message string) {
 	result, err := auth.ProcessHeartbeat(s.main_context, uuid, payloadJSON, signature, ip, pg, rds)
 	if err != nil {
 		shared.DebugPrint("Heartbeat failed for %s: %v", uuid, err)
-		conn.Write([]byte(fmt.Sprintf("ERROR %v\n", err)))
+		conn.Write([]byte("ERROR HEARTBEAT_REJECTED\n"))
 		return
 	}
 
@@ -479,7 +484,7 @@ func (s *TCPServer_t) heartbeatLoop(conn net.Conn, scanner *bufio.Scanner) {
 // PostgreSQL for permanent storage. Requires the robot's public key to be
 // available (stored during REGISTER flow in the active session or retrieved).
 func (s *TCPServer_t) handlePersist(conn net.Conn, result *auth.HandshakeResult, rds *database.RedisHandler, pg *database.PostgresHandler) {
-	if pg == nil {
+	if pg == nil || rds == nil {
 		conn.Write([]byte("ERROR NO_DATABASE\n"))
 		return
 	}
@@ -502,7 +507,7 @@ func (s *TCPServer_t) handlePersist(conn net.Conn, result *auth.HandshakeResult,
 	// Store in PostgreSQL
 	if err := pg.RegisterRobot(s.main_context, result.UUID, publicKey, result.DeviceType); err != nil {
 		shared.DebugPrint("PERSIST failed for %s: %v", result.UUID, err)
-		conn.Write([]byte(fmt.Sprintf("ERROR PERSIST_FAILED %v\n", err)))
+		conn.Write([]byte("ERROR PERSIST_FAILED\n"))
 		return
 	}
 

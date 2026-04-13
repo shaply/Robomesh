@@ -8,10 +8,15 @@ All inter-service communication flows through the `comms.Bus` interface. Service
 type Bus interface {
     PublishEvent(eventType string, data any) error
     SubscribeEvent(eventType string, handler EventHandler) (cancel func(), err error)
+    PublishToGroup(group string, eventType string, data any) error
+    SubscribeAsGroup(group string, eventType string, handler EventHandler) (cancel func(), err error)
     PublishRegistrationResponse(ctx context.Context, uuid string, accepted bool) error
     WaitForRegistrationResponse(ctx context.Context, uuid string) (bool, error)
 }
 ```
+
+- `PublishToGroup` sends an event that only one subscriber in the named consumer group receives (round-robin).
+- `SubscribeAsGroup` joins a consumer group for load-balanced event processing.
 
 ## Current Implementation
 

@@ -230,12 +230,7 @@ func (c *WSClient) sendToRobot(uuid string, data json.RawMessage) {
 		return
 	}
 
-	if hp.RobotSend == nil {
-		c.sendError("robot not connected: " + uuid)
-		return
-	}
-
-	if err := hp.RobotSend(data); err != nil {
+	if err := hp.SendToRobot(data); err != nil {
 		c.sendError("failed to send to robot: " + err.Error())
 		return
 	}

@@ -4,5 +4,10 @@ Version: 0.1.0
 Summary: Python client library for robots communicating with Robomesh Roboserver
 Requires-Python: >=3.10
 Requires-Dist: cryptography>=41.0
+Provides-Extra: mqtt
+Requires-Dist: paho-mqtt>=2.0; extra == "mqtt"
+Provides-Extra: all
+Requires-Dist: paho-mqtt>=2.0; extra == "all"
 Provides-Extra: dev
 Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: paho-mqtt>=2.0; extra == "dev"

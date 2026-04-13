@@ -6,9 +6,9 @@ Unfinished features, TODOs, and implementation gaps in the Robomesh codebase.
 
 ## High Priority
 
-### TASK-023: Implement UDP server
-**Files:** `udp_server/`
-**Description:** This is needed for IoT devices that want to utilize the UDP transport protocol for various communications like streaming or if they just speak UDP natively.
+### ~~TASK-023: Implement UDP server~~
+**Files:** `udp_server/udp_server.go`
+**Status:** Complete — UDP server implemented with JSON packet-based protocol. Supports two-step challenge-response auth, signed heartbeats, and JWT-authenticated messaging. Wired into `main.go`, configurable via `udp_port` in config.yaml (default 5001).
 
 ---
 

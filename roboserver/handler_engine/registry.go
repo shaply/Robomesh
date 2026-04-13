@@ -11,10 +11,15 @@ import (
 // validDeviceType matches only safe device type names: alphanumeric, hyphens, underscores, max 64 chars.
 var validDeviceType = regexp.MustCompile(`^[a-zA-Z0-9_-]{1,64}$`)
 
+// IsValidDeviceType checks whether a device type string is safe and well-formed.
+func IsValidDeviceType(dt string) bool {
+	return validDeviceType.MatchString(dt)
+}
+
 // ResolveHandlerScript returns the absolute path to the handler script for a device type.
 // It looks for: {base_path}/{deviceType}/start_handler.sh
 func ResolveHandlerScript(deviceType string) (string, error) {
-	if !validDeviceType.MatchString(deviceType) {
+	if !IsValidDeviceType(deviceType) {
 		return "", fmt.Errorf("invalid device type %q: must be alphanumeric/hyphens/underscores, max 64 chars", deviceType)
 	}
 	basePath := shared.AppConfig.Handlers.BasePath

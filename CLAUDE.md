@@ -24,7 +24,7 @@ go test ./mqtt_server/          # MQTT protocol tests
 go test ./http_server/http_events/ # SSE event tests
 ```
 
-Configuration loads from `config.yaml` (structural) + `.env` (secrets). Env vars always override. Startup sequence: config → event bus → database (PostgreSQL + Redis, seeds admin user) → comm bus, then 4 concurrent servers (Terminal, HTTP, TCP, MQTT).
+Configuration loads from `config.yaml` (structural) + `.env` (secrets). Env vars always override. Startup sequence: config → event bus → database (PostgreSQL + Redis, seeds admin user) → comm bus, then 5 concurrent servers (Terminal, HTTP, TCP, UDP, MQTT).
 
 ### Frontend (frontend_app/)
 ```bash
@@ -108,6 +108,7 @@ docker compose logs -f backend  # View logs
 - `robot:{uuid}:pending` — Pending registration (5 min TTL)
 - `robot:{uuid}:pubkey` — Public key storage during REGISTER flow
 - `mqtt:nonce:{uuid}` — MQTT auth nonce + cached robot info (30s TTL, pipe-delimited: `nonce|publicKey|deviceType`)
+- `udp:nonce:{uuid}` — UDP auth nonce + cached robot info (30s TTL, same pipe-delimited format as MQTT)
 - `handler:{uuid}:data:{key}` — Handler-scoped custom data storage (no TTL)
 - `user:{username}` — User credentials (bcrypt hashed). Admin seeded on startup.
 - `session:{token}` — User session tokens for server-side invalidation
@@ -130,6 +131,12 @@ docker compose logs -f backend  # View logs
   - `robomesh/to_robot/{uuid}` — Handler→robot messages
   - `acl_hook.go`: Custom ACL restricts topic subscriptions — response and `to_robot` topics only readable by the robot whose UUID matches
   - `bridge_hook.go`: Event bus bridge forwards only `robomesh/message/*` → internal event bus (auth/heartbeat protocol messages are excluded)
+- **UDP** (`udp_server/`): JSON packet-based protocol for IoT devices (default port 5001).
+  - All communication uses self-contained JSON packets with a `type` field
+  - Auth: Two-step challenge-response (same as MQTT pattern). Step 1: `{"type":"auth","uuid":"..."}` → nonce. Step 2: `{"type":"auth","uuid":"...","nonce":"...","signature":"..."}` → JWT.
+  - Heartbeat: `{"type":"heartbeat","uuid":"...","payload":"...","signature":"..."}` — signed heartbeat (same verification as TCP/HTTP)
+  - Message: `{"type":"message","uuid":"...","jwt":"...","payload":"..."}` — JWT-authenticated messages forwarded to handler
+  - Responses are JSON with `type`, `status`, and optional `nonce`/`jwt`/`error` fields
 - **Terminal** (`terminal/`): Interactive CLI for debugging.
 
 ### Heartbeat Protocol
@@ -138,6 +145,7 @@ Robots send heartbeats independently of handler sessions. The heartbeat is a sig
 
 **TCP format:** `HEARTBEAT <UUID> <payloadJSON> <signatureHex>`
 **HTTP format:** `POST /heartbeat` with `{"uuid": "...", "payload": "...", "signature": "..."}`
+**UDP format:** `{"type":"heartbeat","uuid":"...","payload":"...","signature":"..."}`
 
 **Payload fields:**
 - `seq` (required): Monotonically increasing sequence number (replay protection)
@@ -225,22 +233,26 @@ handlers/
 
 ### Robot SDKs
 
-Both SDKs live in `robot_sdk/` and implement the full TCP protocol (AUTH, REGISTER, PERSIST, HEARTBEAT, messaging).
+Both SDKs live in `robot_sdk/` and implement TCP, UDP, and MQTT protocols (AUTH, REGISTER, PERSIST, HEARTBEAT, messaging).
 
-**C SDK** (`robot_sdk/c/`) — Static library (`librobomesh.a`) using OpenSSL for Ed25519 and POSIX sockets. Designed for embedded devices and low-level integration. Synchronous/blocking API. CMake build system.
+**C SDK** (`robot_sdk/c/`) — Static libraries using OpenSSL for Ed25519 and POSIX sockets. Designed for embedded devices and low-level integration. Synchronous/blocking API. CMake build system.
 
-- `include/robomesh.h`: Public API (keypair management, client lifecycle, all protocol flows)
-- `src/robomesh.c`: Implementation
+- `librobomesh.a` — TCP client: `include/robomesh.h`, `src/robomesh.c`
+- `librobomesh_udp.a` — UDP client: `include/robomesh_udp.h`, `src/robomesh_udp.c`
+- `librobomesh_mqtt.a` — MQTT client (requires libmosquitto): `include/robomesh_mqtt.h`, `src/robomesh_mqtt.c`
 - `tests/test_integration.c`: 8 integration tests (key gen/load, auth success/failure, provisioned auth, heartbeat, messaging)
-- `examples/test_robot.c`: Demo using pre-seeded `example-001` robot
+- `examples/test_robot.c`: TCP demo, `examples/test_robot_udp.c`: UDP demo, `examples/test_robot_mqtt.c`: MQTT demo
 
-**Python SDK** (`robot_sdk/python/`) — Higher-level client with background threads for heartbeat and message receiving. Uses `cryptography` library for Ed25519.
+**Python SDK** (`robot_sdk/python/`) — Higher-level clients with background threads for heartbeat and message receiving. Uses `cryptography` library for Ed25519.
 
-- `robomesh_sdk/client.py`: `RobotClient` class with `on_message()` callback and `start_heartbeat()` background loop
+- `robomesh_sdk/client.py`: `RobotClient` — TCP client with `on_message()` callback and `start_heartbeat()` background loop
+- `robomesh_sdk/udp_client.py`: `RobotUDPClient` — UDP client with JSON packet-based protocol
+- `robomesh_sdk/mqtt_client.py`: `RobotMQTTClient` — MQTT client (requires `paho-mqtt>=2.0`, install with `pip install robomesh-sdk[mqtt]`)
 - `robomesh_sdk/keys.py`: Ed25519 key generation, loading, signing
 - `robomesh_sdk/admin.py`: Admin API helpers (provision, registration approval)
+- `tests/test_udp_unit.py`, `tests/test_mqtt_unit.py`: Unit tests with mocked transport layers (29 tests total)
 
-**Key differences:** Python SDK has background heartbeat thread (`start_heartbeat()`), message callback (`on_message()`), and admin API wrapper. C SDK is synchronous-only with manual heartbeat calls.
+**Key differences:** Python SDK has background heartbeat thread (`start_heartbeat()`), message callback (`on_message()`), and admin API wrapper. C SDK is synchronous-only with manual heartbeat calls. MQTT is optional in both SDKs (requires external library).
 
 ## Naming Conventions
 

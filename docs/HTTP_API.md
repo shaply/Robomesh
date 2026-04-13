@@ -12,6 +12,7 @@ Base URL: `http://{host}:{http_port}` (default port 8080).
 | `POST` | `/auth/logout` | JWT | Invalidate session (removes from Redis) |
 | `GET` | `/auth` | JWT | Check if current token is valid |
 | `POST` | `/auth/ticket` | JWT | Get a short-lived single-use ticket for SSE (30s TTL) |
+| `POST` | `/auth/password` | JWT | Change password: `{current_password, new_password}` (8-72 chars) |
 
 **Token extraction:** Authorization header (`Bearer <token>`) or cookie (`session-token`). Query parameters are **not** accepted for JWTs.
 
@@ -31,7 +32,7 @@ Content-Type: application/json
 **Response (200):**
 
 ```json
-{"token": "<jwt>"}
+{"status": "success", "message": "Logged in successfully", "token": "<jwt>"}
 ```
 
 **Rate limiting:** 5 failed attempts per IP within a 5-minute window results in `429 Too Many Requests`.
@@ -136,10 +137,10 @@ Handlers survive TCP disconnects. They can be started/killed independently via t
 3. Frontend connects `EventSource` with `?events=type1,type2&ticket=<ticket>`
 4. Server consumes and deletes ticket on first use
 5. Server sends initial `sessID` event with client session ID
-6. Events stream as base64-encoded JSON:
+6. Events stream as JSON envelopes on SSE data lines:
 
 ```json
-{"id": "evt-1", "type": "robot.registering", "encoded_data": "<base64>"}
+{"id": "evt-1", "type": "robot.registering", "data": "<json_string>"}
 ```
 
 ## Plugin System

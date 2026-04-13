@@ -107,7 +107,10 @@ func (hp *HandlerProcess) reverseConnectTCP(ctx context.Context, requestID, addr
 
 	// Perform the AUTH handshake as the server side
 	// Send our identity so the robot knows who's connecting
-	conn.Write([]byte(fmt.Sprintf("ROBOSERVER_CONNECT %s\n", hp.UUID)))
+	if _, err := conn.Write([]byte(fmt.Sprintf("ROBOSERVER_CONNECT %s\n", hp.UUID))); err != nil {
+		hp.sendResponse(requestID, nil, "failed to send identity: "+err.Error())
+		return
+	}
 
 	// Wait for robot acknowledgment
 	conn.SetReadDeadline(time.Now().Add(shared.AppConfig.Timeouts.HandshakeTimeout()))
@@ -131,7 +134,10 @@ func (hp *HandlerProcess) reverseConnectTCP(ctx context.Context, requestID, addr
 		hp.sendResponse(requestID, nil, "failed to generate nonce")
 		return
 	}
-	conn.Write([]byte(fmt.Sprintf("NONCE %s\n", nonce)))
+	if _, err := conn.Write([]byte(fmt.Sprintf("NONCE %s\n", nonce))); err != nil {
+		hp.sendResponse(requestID, nil, "failed to send nonce: "+err.Error())
+		return
+	}
 
 	conn.SetReadDeadline(time.Now().Add(shared.AppConfig.Timeouts.HandshakeTimeout()))
 	if !scanner.Scan() {
@@ -154,7 +160,10 @@ func (hp *HandlerProcess) reverseConnectTCP(ctx context.Context, requestID, addr
 	}
 
 	conn.SetReadDeadline(time.Time{}) // Clear deadline
-	conn.Write([]byte("AUTH_OK\n"))
+	if _, err := conn.Write([]byte("AUTH_OK\n")); err != nil {
+		hp.sendResponse(requestID, nil, "failed to send auth confirmation: "+err.Error())
+		return
+	}
 
 	// Update RobotSend to use the new connection (reject if one already exists)
 	hp.mu.Lock()

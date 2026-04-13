@@ -4,7 +4,8 @@
 
 server:
   http_port: 8080
-  tcp_port: 5000
+  tcp_port: 5002
+  udp_port: 5001
   mqtt_port: 1883
   terminal_port: 6000
   debug: false

@@ -130,6 +130,19 @@ robomesh/fast:
 .PHONY : robomesh/fast
 
 #=============================================================================
+# Target rules for targets named robomesh_udp
+
+# Build rule for target.
+robomesh_udp: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 robomesh_udp
+.PHONY : robomesh_udp
+
+# fast build rule for target.
+robomesh_udp/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/robomesh_udp.dir/build.make CMakeFiles/robomesh_udp.dir/build
+.PHONY : robomesh_udp/fast
+
+#=============================================================================
 # Target rules for targets named test_robot
 
 # Build rule for target.
@@ -141,6 +154,19 @@ test_robot: cmake_check_build_system
 test_robot/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_robot.dir/build.make CMakeFiles/test_robot.dir/build
 .PHONY : test_robot/fast
+
+#=============================================================================
+# Target rules for targets named test_robot_udp
+
+# Build rule for target.
+test_robot_udp: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 test_robot_udp
+.PHONY : test_robot_udp
+
+# fast build rule for target.
+test_robot_udp/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_robot_udp.dir/build.make CMakeFiles/test_robot_udp.dir/build
+.PHONY : test_robot_udp/fast
 
 #=============================================================================
 # Target rules for targets named test_integration
@@ -179,6 +205,30 @@ examples/test_robot.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_robot.dir/build.make CMakeFiles/test_robot.dir/examples/test_robot.c.s
 .PHONY : examples/test_robot.c.s
 
+examples/test_robot_udp.o: examples/test_robot_udp.c.o
+.PHONY : examples/test_robot_udp.o
+
+# target to build an object file
+examples/test_robot_udp.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_robot_udp.dir/build.make CMakeFiles/test_robot_udp.dir/examples/test_robot_udp.c.o
+.PHONY : examples/test_robot_udp.c.o
+
+examples/test_robot_udp.i: examples/test_robot_udp.c.i
+.PHONY : examples/test_robot_udp.i
+
+# target to preprocess a source file
+examples/test_robot_udp.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_robot_udp.dir/build.make CMakeFiles/test_robot_udp.dir/examples/test_robot_udp.c.i
+.PHONY : examples/test_robot_udp.c.i
+
+examples/test_robot_udp.s: examples/test_robot_udp.c.s
+.PHONY : examples/test_robot_udp.s
+
+# target to generate assembly for a file
+examples/test_robot_udp.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_robot_udp.dir/build.make CMakeFiles/test_robot_udp.dir/examples/test_robot_udp.c.s
+.PHONY : examples/test_robot_udp.c.s
+
 src/robomesh.o: src/robomesh.c.o
 .PHONY : src/robomesh.o
 
@@ -202,6 +252,30 @@ src/robomesh.s: src/robomesh.c.s
 src/robomesh.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/robomesh.dir/build.make CMakeFiles/robomesh.dir/src/robomesh.c.s
 .PHONY : src/robomesh.c.s
+
+src/robomesh_udp.o: src/robomesh_udp.c.o
+.PHONY : src/robomesh_udp.o
+
+# target to build an object file
+src/robomesh_udp.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/robomesh_udp.dir/build.make CMakeFiles/robomesh_udp.dir/src/robomesh_udp.c.o
+.PHONY : src/robomesh_udp.c.o
+
+src/robomesh_udp.i: src/robomesh_udp.c.i
+.PHONY : src/robomesh_udp.i
+
+# target to preprocess a source file
+src/robomesh_udp.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/robomesh_udp.dir/build.make CMakeFiles/robomesh_udp.dir/src/robomesh_udp.c.i
+.PHONY : src/robomesh_udp.c.i
+
+src/robomesh_udp.s: src/robomesh_udp.c.s
+.PHONY : src/robomesh_udp.s
+
+# target to generate assembly for a file
+src/robomesh_udp.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/robomesh_udp.dir/build.make CMakeFiles/robomesh_udp.dir/src/robomesh_udp.c.s
+.PHONY : src/robomesh_udp.c.s
 
 tests/test_integration.o: tests/test_integration.c.o
 .PHONY : tests/test_integration.o
@@ -236,14 +310,22 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... robomesh"
+	@echo "... robomesh_udp"
 	@echo "... test_integration"
 	@echo "... test_robot"
+	@echo "... test_robot_udp"
 	@echo "... examples/test_robot.o"
 	@echo "... examples/test_robot.i"
 	@echo "... examples/test_robot.s"
+	@echo "... examples/test_robot_udp.o"
+	@echo "... examples/test_robot_udp.i"
+	@echo "... examples/test_robot_udp.s"
 	@echo "... src/robomesh.o"
 	@echo "... src/robomesh.i"
 	@echo "... src/robomesh.s"
+	@echo "... src/robomesh_udp.o"
+	@echo "... src/robomesh_udp.i"
+	@echo "... src/robomesh_udp.s"
 	@echo "... tests/test_integration.o"
 	@echo "... tests/test_integration.i"
 	@echo "... tests/test_integration.s"

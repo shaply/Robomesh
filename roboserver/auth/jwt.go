@@ -3,6 +3,7 @@ package auth
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -81,7 +82,7 @@ func ValidateSessionJWT(tokenStr string) (*JWTClaims, error) {
 
 	signingInput := parts[0] + "." + parts[1]
 	expectedSig := signHS256(signingInput, secret)
-	if parts[2] != expectedSig {
+	if subtle.ConstantTimeCompare([]byte(parts[2]), []byte(expectedSig)) != 1 {
 		return nil, ErrTokenInvalid
 	}
 

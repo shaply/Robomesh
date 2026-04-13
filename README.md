@@ -169,7 +169,7 @@ Configuration priority: **defaults < config.yaml < environment variables**.
 | Variable | Description | Default |
 | --- | --- | --- |
 | `HTTP_PORT` | HTTP API port | 8080 |
-| `TCP_PORT` | Robot TCP port | 5000 |
+| `TCP_PORT` | Robot TCP port | 5002 |
 | `POSTGRES_HOST` | PostgreSQL host | localhost |
 | `POSTGRES_PASSWORD` | PostgreSQL password | *(required)* |
 | `REDIS_HOST` | Redis host | localhost |

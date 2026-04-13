@@ -1,0 +1,2 @@
+/usr/bin/ar qc librobomesh_udp.a CMakeFiles/robomesh_udp.dir/src/robomesh_udp.c.o
+/usr/bin/ranlib librobomesh_udp.a

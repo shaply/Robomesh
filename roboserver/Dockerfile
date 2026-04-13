@@ -13,12 +13,17 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates bash && \
     rm -rf /var/lib/apt/lists/*
 
+# Run as non-root user to limit blast radius of container compromise
+RUN useradd --system --no-create-home robomesh
+
 COPY --from=builder /app/roboserver .
 COPY --from=builder /app/config.yaml .
 
 # handlers/ is mounted as a volume from the project root at runtime
-RUN mkdir -p handlers
+RUN mkdir -p handlers && chown robomesh:robomesh handlers
 
-EXPOSE 8080 5000 1883
+USER robomesh
+
+EXPOSE 8080 5002 5001/udp 1883
 
 CMD ["./roboserver"]

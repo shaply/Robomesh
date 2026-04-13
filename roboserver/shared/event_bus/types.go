@@ -20,16 +20,9 @@ type SubscriberHandler func(event Event)
 type Event interface {
 	GetType() string
 	GetData() interface{}
-	GetDataPtr() *interface{} // Returns pointer to data
 }
 
-// DefaultEvent is a simple implementation of the Event interface
-type DefaultPtrEvent struct { // For larger data, use pointers to avoid copying
-	Type string
-	Data *interface{}
-}
-
-type DefaultEvent struct { // For smaller data, use values to avoid pointer dereferencing
+type DefaultEvent struct {
 	Type string
 	Data interface{}
 }

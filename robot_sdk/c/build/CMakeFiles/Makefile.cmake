@@ -58,6 +58,8 @@ set(CMAKE_MAKEFILE_PRODUCTS
 # Dependency information for all targets:
 set(CMAKE_DEPEND_INFO_FILES
   "CMakeFiles/robomesh.dir/DependInfo.cmake"
+  "CMakeFiles/robomesh_udp.dir/DependInfo.cmake"
   "CMakeFiles/test_robot.dir/DependInfo.cmake"
+  "CMakeFiles/test_robot_udp.dir/DependInfo.cmake"
   "CMakeFiles/test_integration.dir/DependInfo.cmake"
   )

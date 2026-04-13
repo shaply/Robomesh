@@ -39,6 +39,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     searched_directories:
       - "/Users/davidgu/.local/bin/uname"
       - "/Users/davidgu/.antigravity/antigravity/bin/uname"
@@ -73,6 +74,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "message-v1"
     backtrace:
@@ -120,6 +122,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     searched_directories:
       - "/Users/davidgu/.local/bin/gmake"
       - "/Users/davidgu/.antigravity/antigravity/bin/gmake"
@@ -150,6 +153,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -195,6 +199,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     searched_directories:
       - "/Users/davidgu/.local/bin/cc"
       - "/Users/davidgu/.antigravity/antigravity/bin/cc"
@@ -229,6 +234,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -276,6 +282,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "message-v1"
     backtrace:
@@ -378,6 +385,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     found: "/usr/bin/ar"
     search_context:
       ENV{PATH}:
@@ -401,6 +409,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -440,6 +449,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     found: "/usr/bin/ranlib"
     search_context:
       ENV{PATH}:
@@ -463,6 +473,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -502,6 +513,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     found: "/usr/bin/strip"
     search_context:
       ENV{PATH}:
@@ -525,6 +537,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -564,6 +577,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     found: "/usr/bin/ld"
     search_context:
       ENV{PATH}:
@@ -587,6 +601,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -626,6 +641,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     found: "/usr/bin/nm"
     search_context:
       ENV{PATH}:
@@ -649,6 +665,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -688,6 +705,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     found: "/usr/bin/objdump"
     search_context:
       ENV{PATH}:
@@ -711,6 +729,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -750,6 +769,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     searched_directories:
       - "/usr/bin/objcopy"
       - "/Users/davidgu/.local/bin/objcopy"
@@ -770,6 +790,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/objcopy"
       - "/opt/pmk/env/global/bin/objcopy"
       - "/Library/Apple/usr/bin/objcopy"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/objcopy"
     found: false
     search_context:
       ENV{PATH}:
@@ -793,6 +814,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -832,6 +854,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     searched_directories:
       - "/usr/bin/readelf"
       - "/Users/davidgu/.local/bin/readelf"
@@ -852,6 +875,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/readelf"
       - "/opt/pmk/env/global/bin/readelf"
       - "/Library/Apple/usr/bin/readelf"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/readelf"
     found: false
     search_context:
       ENV{PATH}:
@@ -875,6 +899,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -914,6 +939,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     searched_directories:
       - "/usr/bin/dlltool"
       - "/Users/davidgu/.local/bin/dlltool"
@@ -934,6 +960,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/dlltool"
       - "/opt/pmk/env/global/bin/dlltool"
       - "/Library/Apple/usr/bin/dlltool"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/dlltool"
     found: false
     search_context:
       ENV{PATH}:
@@ -957,6 +984,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -996,6 +1024,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     searched_directories:
       - "/usr/bin/addr2line"
       - "/Users/davidgu/.local/bin/addr2line"
@@ -1016,6 +1045,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/addr2line"
       - "/opt/pmk/env/global/bin/addr2line"
       - "/Library/Apple/usr/bin/addr2line"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/addr2line"
     found: false
     search_context:
       ENV{PATH}:
@@ -1039,6 +1069,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -1078,6 +1109,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     searched_directories:
       - "/usr/bin/tapi"
       - "/Users/davidgu/.local/bin/tapi"
@@ -1098,6 +1130,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/tapi"
       - "/opt/pmk/env/global/bin/tapi"
       - "/Library/Apple/usr/bin/tapi"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/tapi"
     found: false
     search_context:
       ENV{PATH}:
@@ -1121,6 +1154,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
   -
     kind: "find-v1"
     backtrace:
@@ -1160,6 +1194,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
     searched_directories:
       - "/Users/davidgu/.local/bin/install_name_tool"
       - "/Users/davidgu/.antigravity/antigravity/bin/install_name_tool"
@@ -1194,6 +1229,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
   -
     kind: "try_compile-v1"
@@ -1204,8 +1240,8 @@ events:
     checks:
       - "Detecting C compiler ABI info"
     directories:
-      source: "/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-0LbNPN"
-      binary: "/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-0LbNPN"
+      source: "/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-V8vn6W"
+      binary: "/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-V8vn6W"
     cmakeVariables:
       CMAKE_C_FLAGS: ""
       CMAKE_C_FLAGS_DEBUG: "-g"
@@ -1217,19 +1253,19 @@ events:
       variable: "CMAKE_C_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-0LbNPN'
+        Change Dir: '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-V8vn6W'
         
-        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /opt/homebrew/bin/gmake -f Makefile cmTC_9e78d/fast
-        /opt/homebrew/bin/gmake  -f CMakeFiles/cmTC_9e78d.dir/build.make CMakeFiles/cmTC_9e78d.dir/build
-        gmake[1]: Entering directory '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-0LbNPN'
-        Building C object CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o
-        /usr/bin/cc   -arch arm64   -v -Wl,-v -MD -MT CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o -c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c
+        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /opt/homebrew/bin/gmake -f Makefile cmTC_9d34f/fast
+        /opt/homebrew/bin/gmake  -f CMakeFiles/cmTC_9d34f.dir/build.make CMakeFiles/cmTC_9d34f.dir/build
+        gmake[1]: Entering directory '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-V8vn6W'
+        Building C object CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o
+        /usr/bin/cc   -arch arm64   -v -Wl,-v -MD -MT CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o -c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c
         Apple clang version 17.0.0 (clang-1700.6.4.2)
         Target: arm64-apple-darwin25.3.0
         Thread model: posix
         InstalledDir: /Library/Developer/CommandLineTools/usr/bin
         clang: warning: -Wl,-v: 'linker' input unused [-Wunused-command-line-argument]
-         "/Library/Developer/CommandLineTools/usr/bin/clang" -cc1 -triple arm64-apple-macosx26.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=26.2 -fvisibility-inlines-hidden-static-local-var -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +zcm -target-feature +zcz -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb -fdebug-compilation-dir=/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-0LbNPN -target-linker-version 1230.1 -v -fcoverage-compilation-dir=/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-0LbNPN -resource-dir /Library/Developer/CommandLineTools/usr/lib/clang/17 -dependency-file CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -I/usr/local/include -internal-isystem /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Library/Developer/CommandLineTools/usr/lib/clang/17/include -internal-externc-isystem /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Library/Developer/CommandLineTools/usr/include -internal-iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/Library/Frameworks -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o -x c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c
+         "/Library/Developer/CommandLineTools/usr/bin/clang" -cc1 -triple arm64-apple-macosx26.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=26.2 -fvisibility-inlines-hidden-static-local-var -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +zcm -target-feature +zcz -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb -fdebug-compilation-dir=/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-V8vn6W -target-linker-version 1230.1 -v -fcoverage-compilation-dir=/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-V8vn6W -resource-dir /Library/Developer/CommandLineTools/usr/lib/clang/17 -dependency-file CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -I/usr/local/include -internal-isystem /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Library/Developer/CommandLineTools/usr/lib/clang/17/include -internal-externc-isystem /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Library/Developer/CommandLineTools/usr/include -internal-iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/Library/Frameworks -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o -x c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c
         clang -cc1 version 17.0.0 (clang-1700.6.4.2) default target arm64-apple-darwin25.3.0
         ignoring nonexistent directory "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/local/include"
         ignoring nonexistent directory "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/Library/Frameworks"
@@ -1242,13 +1278,13 @@ events:
          /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks (framework directory)
          /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/SubFrameworks (framework directory)
         End of search list.
-        Linking C executable cmTC_9e78d
-        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9e78d.dir/link.txt --verbose=1
+        Linking C executable cmTC_9d34f
+        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9d34f.dir/link.txt --verbose=1
         Apple clang version 17.0.0 (clang-1700.6.4.2)
         Target: arm64-apple-darwin25.3.0
         Thread model: posix
         InstalledDir: /Library/Developer/CommandLineTools/usr/bin
-         "/Library/Developer/CommandLineTools/usr/bin/ld" -demangle -lto_library /Library/Developer/CommandLineTools/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 26.0.0 26.2 -syslibroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_9e78d -L/usr/local/lib -v CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o -lSystem /Library/Developer/CommandLineTools/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a
+         "/Library/Developer/CommandLineTools/usr/bin/ld" -demangle -lto_library /Library/Developer/CommandLineTools/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 26.0.0 26.2 -syslibroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_9d34f -L/usr/local/lib -v CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o -lSystem /Library/Developer/CommandLineTools/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a
         @(#)PROGRAM:ld PROJECT:ld-1230.1
         BUILD 10:14:01 Jan  9 2026
         configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em armv8m.main armv8.1m.main
@@ -1260,8 +1296,8 @@ events:
         	/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/swift
         Framework search paths:
         	/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks
-        /usr/bin/cc  -arch arm64  -v -Wl,-v CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o -o cmTC_9e78d
-        gmake[1]: Leaving directory '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-0LbNPN'
+        /usr/bin/cc  -arch arm64  -v -Wl,-v CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o -o cmTC_9d34f
+        gmake[1]: Leaving directory '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-V8vn6W'
         
       exitCode: 0
   -
@@ -1305,19 +1341,19 @@ events:
       Parsed C implicit link information:
         link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
         linker tool regex: [^[ 	]*(->|"|[0-9]+>[ 	-]*Build:[ 	0-9]+ ms[ 	]*)?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)))("|,| |$)]
-        ignore line: [Change Dir: '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-0LbNPN']
+        ignore line: [Change Dir: '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-V8vn6W']
         ignore line: []
-        ignore line: [Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /opt/homebrew/bin/gmake -f Makefile cmTC_9e78d/fast]
-        ignore line: [/opt/homebrew/bin/gmake  -f CMakeFiles/cmTC_9e78d.dir/build.make CMakeFiles/cmTC_9e78d.dir/build]
-        ignore line: [gmake[1]: Entering directory '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-0LbNPN']
-        ignore line: [Building C object CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o]
-        ignore line: [/usr/bin/cc   -arch arm64   -v -Wl -v -MD -MT CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o -c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c]
+        ignore line: [Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /opt/homebrew/bin/gmake -f Makefile cmTC_9d34f/fast]
+        ignore line: [/opt/homebrew/bin/gmake  -f CMakeFiles/cmTC_9d34f.dir/build.make CMakeFiles/cmTC_9d34f.dir/build]
+        ignore line: [gmake[1]: Entering directory '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-V8vn6W']
+        ignore line: [Building C object CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o]
+        ignore line: [/usr/bin/cc   -arch arm64   -v -Wl -v -MD -MT CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o -c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c]
         ignore line: [Apple clang version 17.0.0 (clang-1700.6.4.2)]
         ignore line: [Target: arm64-apple-darwin25.3.0]
         ignore line: [Thread model: posix]
         ignore line: [InstalledDir: /Library/Developer/CommandLineTools/usr/bin]
         ignore line: [clang: warning: -Wl -v: 'linker' input unused [-Wunused-command-line-argument]]
-        ignore line: [ "/Library/Developer/CommandLineTools/usr/bin/clang" -cc1 -triple arm64-apple-macosx26.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=26.2 -fvisibility-inlines-hidden-static-local-var -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +zcm -target-feature +zcz -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb -fdebug-compilation-dir=/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-0LbNPN -target-linker-version 1230.1 -v -fcoverage-compilation-dir=/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-0LbNPN -resource-dir /Library/Developer/CommandLineTools/usr/lib/clang/17 -dependency-file CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -I/usr/local/include -internal-isystem /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Library/Developer/CommandLineTools/usr/lib/clang/17/include -internal-externc-isystem /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Library/Developer/CommandLineTools/usr/include -internal-iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/Library/Frameworks -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o -x c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c]
+        ignore line: [ "/Library/Developer/CommandLineTools/usr/bin/clang" -cc1 -triple arm64-apple-macosx26.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=26.2 -fvisibility-inlines-hidden-static-local-var -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +zcm -target-feature +zcz -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb -fdebug-compilation-dir=/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-V8vn6W -target-linker-version 1230.1 -v -fcoverage-compilation-dir=/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-V8vn6W -resource-dir /Library/Developer/CommandLineTools/usr/lib/clang/17 -dependency-file CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -I/usr/local/include -internal-isystem /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Library/Developer/CommandLineTools/usr/lib/clang/17/include -internal-externc-isystem /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Library/Developer/CommandLineTools/usr/include -internal-iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/Library/Frameworks -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o -x c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c]
         ignore line: [clang -cc1 version 17.0.0 (clang-1700.6.4.2) default target arm64-apple-darwin25.3.0]
         ignore line: [ignoring nonexistent directory "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/local/include"]
         ignore line: [ignoring nonexistent directory "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/Library/Frameworks"]
@@ -1330,13 +1366,13 @@ events:
         ignore line: [ /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks (framework directory)]
         ignore line: [ /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/SubFrameworks (framework directory)]
         ignore line: [End of search list.]
-        ignore line: [Linking C executable cmTC_9e78d]
-        ignore line: [/opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9e78d.dir/link.txt --verbose=1]
+        ignore line: [Linking C executable cmTC_9d34f]
+        ignore line: [/opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_9d34f.dir/link.txt --verbose=1]
         ignore line: [Apple clang version 17.0.0 (clang-1700.6.4.2)]
         ignore line: [Target: arm64-apple-darwin25.3.0]
         ignore line: [Thread model: posix]
         ignore line: [InstalledDir: /Library/Developer/CommandLineTools/usr/bin]
-        link line: [ "/Library/Developer/CommandLineTools/usr/bin/ld" -demangle -lto_library /Library/Developer/CommandLineTools/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 26.0.0 26.2 -syslibroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_9e78d -L/usr/local/lib -v CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o -lSystem /Library/Developer/CommandLineTools/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a]
+        link line: [ "/Library/Developer/CommandLineTools/usr/bin/ld" -demangle -lto_library /Library/Developer/CommandLineTools/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 26.0.0 26.2 -syslibroot /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_9d34f -L/usr/local/lib -v CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o -lSystem /Library/Developer/CommandLineTools/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a]
           arg [/Library/Developer/CommandLineTools/usr/bin/ld] ==> ignore
           arg [-demangle] ==> ignore
           arg [-lto_library] ==> ignore, skip following value
@@ -1353,10 +1389,10 @@ events:
           arg [-mllvm] ==> ignore
           arg [-enable-linkonceodr-outlining] ==> ignore
           arg [-o] ==> ignore
-          arg [cmTC_9e78d] ==> ignore
+          arg [cmTC_9d34f] ==> ignore
           arg [-L/usr/local/lib] ==> dir [/usr/local/lib]
           arg [-v] ==> ignore
-          arg [CMakeFiles/cmTC_9e78d.dir/CMakeCCompilerABI.c.o] ==> ignore
+          arg [CMakeFiles/cmTC_9d34f.dir/CMakeCCompilerABI.c.o] ==> ignore
           arg [-lSystem] ==> lib [System]
           arg [/Library/Developer/CommandLineTools/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a] ==> lib [/Library/Developer/CommandLineTools/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a]
         linker tool for 'C': /Library/Developer/CommandLineTools/usr/bin/ld
@@ -1429,6 +1465,7 @@ events:
       - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/bin/"
       - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/sbin/"
       - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/"
@@ -1496,6 +1533,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr"
@@ -1560,6 +1598,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr"
@@ -1633,6 +1672,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr"
@@ -1718,6 +1758,8 @@ events:
       - "/opt/pmk/env/global/bin/"
       - "/Library/Apple/usr/bin/include/"
       - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/include/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
       - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/include/"
       - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/"
       - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/"
@@ -1815,6 +1857,8 @@ events:
       - "/opt/pmk/env/global/bin/openssl.framework/Headers/ssl.h"
       - "/Library/Apple/usr/bin/include/openssl.framework/Headers/ssl.h"
       - "/Library/Apple/usr/bin/openssl.framework/Headers/ssl.h"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/include/openssl.framework/Headers/ssl.h"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/openssl.framework/Headers/ssl.h"
       - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/include/openssl.framework/Headers/ssl.h"
       - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/openssl.framework/Headers/ssl.h"
       - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/openssl.framework/Headers/ssl.h"
@@ -1895,6 +1939,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr"
@@ -1995,6 +2040,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr"
@@ -2093,6 +2139,7 @@ events:
         - "/opt/pmk/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
       CMAKE_SYSTEM_PREFIX_PATH:
         - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr"
@@ -2119,10 +2166,6 @@ events:
         - "/Library/Frameworks"
         - "/Network/Library/Frameworks"
         - "/System/Library/Frameworks"
-...
-
----
-events:
   -
     kind: "try_compile-v1"
     backtrace:
@@ -2134,8 +2177,8 @@ events:
     checks:
       - "Performing Test CMAKE_HAVE_LIBC_PTHREAD"
     directories:
-      source: "/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-vnv9Rz"
-      binary: "/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-vnv9Rz"
+      source: "/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-VgGGwY"
+      binary: "/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-VgGGwY"
     cmakeVariables:
       CMAKE_C_FLAGS: ""
       CMAKE_C_FLAGS_DEBUG: "-g"
@@ -2147,17 +2190,303 @@ events:
       variable: "CMAKE_HAVE_LIBC_PTHREAD"
       cached: true
       stdout: |
-        Change Dir: '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-vnv9Rz'
+        Change Dir: '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-VgGGwY'
         
-        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /opt/homebrew/bin/gmake -f Makefile cmTC_3f978/fast
-        /opt/homebrew/bin/gmake  -f CMakeFiles/cmTC_3f978.dir/build.make CMakeFiles/cmTC_3f978.dir/build
-        gmake[1]: Entering directory '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-vnv9Rz'
-        Building C object CMakeFiles/cmTC_3f978.dir/src.c.o
-        /usr/bin/cc -DCMAKE_HAVE_LIBC_PTHREAD  -std=gnu11 -arch arm64 -MD -MT CMakeFiles/cmTC_3f978.dir/src.c.o -MF CMakeFiles/cmTC_3f978.dir/src.c.o.d -o CMakeFiles/cmTC_3f978.dir/src.c.o -c /Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-vnv9Rz/src.c
-        Linking C executable cmTC_3f978
-        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3f978.dir/link.txt --verbose=1
-        /usr/bin/cc  -arch arm64 CMakeFiles/cmTC_3f978.dir/src.c.o -o cmTC_3f978
-        gmake[1]: Leaving directory '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-vnv9Rz'
+        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /opt/homebrew/bin/gmake -f Makefile cmTC_90ff8/fast
+        /opt/homebrew/bin/gmake  -f CMakeFiles/cmTC_90ff8.dir/build.make CMakeFiles/cmTC_90ff8.dir/build
+        gmake[1]: Entering directory '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-VgGGwY'
+        Building C object CMakeFiles/cmTC_90ff8.dir/src.c.o
+        /usr/bin/cc -DCMAKE_HAVE_LIBC_PTHREAD  -std=gnu11 -arch arm64 -MD -MT CMakeFiles/cmTC_90ff8.dir/src.c.o -MF CMakeFiles/cmTC_90ff8.dir/src.c.o.d -o CMakeFiles/cmTC_90ff8.dir/src.c.o -c /Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-VgGGwY/src.c
+        Linking C executable cmTC_90ff8
+        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_90ff8.dir/link.txt --verbose=1
+        /usr/bin/cc  -arch arm64 CMakeFiles/cmTC_90ff8.dir/src.c.o -o cmTC_90ff8
+        gmake[1]: Leaving directory '/Users/davidgu/Desktop/Projects/Robomesh/robot_sdk/c/build/CMakeFiles/CMakeScratch/TryCompile-VgGGwY'
         
       exitCode: 0
+  -
+    kind: "find-v1"
+    backtrace:
+      - "CMakeLists.txt:20 (find_library)"
+    mode: "library"
+    variable: "MOSQUITTO_LIB"
+    description: "Path to a library."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "mosquitto"
+    candidate_directories:
+      - "/Users/davidgu/.local/bin/"
+      - "/Users/davidgu/.antigravity/antigravity/bin/"
+      - "/Users/davidgu/.nvm/versions/node/v22.12.0/bin/"
+      - "/usr/local/go/bin/"
+      - "/opt/homebrew/opt/python@3.14/libexec/bin/"
+      - "/Library/Frameworks/Python.framework/Versions/3.13/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/local/bin/"
+      - "/System/Cryptexes/App/usr/bin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/"
+      - "/opt/homebrew/lib/"
+      - "/opt/homebrew/"
+      - "/usr/local/"
+      - "/usr/lib/"
+      - "/usr/"
+      - "/opt/"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/"
+      - "/Library/Developer/CommandLineTools/Library/Frameworks/"
+      - "/Library/Frameworks/"
+      - "/System/Library/Frameworks/"
+    searched_directories:
+      - "/Users/davidgu/.local/bin/"
+      - "/Users/davidgu/.antigravity/antigravity/bin/"
+      - "/Users/davidgu/.nvm/versions/node/v22.12.0/bin/"
+      - "/usr/local/go/bin/"
+      - "/opt/homebrew/opt/python@3.14/libexec/bin/"
+      - "/Library/Frameworks/Python.framework/Versions/3.13/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/local/bin/"
+      - "/System/Cryptexes/App/usr/bin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib/"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/"
+      - "/opt/homebrew/lib/"
+      - "/opt/homebrew/"
+      - "/usr/local/"
+      - "/usr/lib/"
+      - "/usr/"
+      - "/opt/"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/"
+      - "/Library/Developer/CommandLineTools/Library/Frameworks/"
+      - "/Library/Frameworks/"
+      - "/System/Library/Frameworks/"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "/Users/davidgu/.local/bin"
+        - "/Users/davidgu/.antigravity/antigravity/bin"
+        - "/Users/davidgu/.nvm/versions/node/v22.12.0/bin"
+        - "/usr/local/go/bin"
+        - "/opt/homebrew/opt/python@3.14/libexec/bin"
+        - "/Library/Frameworks/Python.framework/Versions/3.13/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/local/bin"
+        - "/System/Cryptexes/App/usr/bin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
+        - "/opt/pmk/env/global/bin"
+        - "/Library/Apple/usr/bin"
+        - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+      CMAKE_INSTALL_PREFIX: "/usr/local"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr"
+        - "/opt/homebrew"
+        - "/usr/local"
+        - "/usr"
+        - "/"
+        - "/opt/homebrew"
+        - "/usr/local"
+        - "/usr/X11R6"
+        - "/usr/pkg"
+        - "/opt"
+        - "/sw"
+        - "/opt/local"
+      CMAKE_SYSTEM_LIBRARY_PATH:
+        - "/usr/lib/X11"
+      CMAKE_SYSTEM_FRAMEWORK_PATH:
+        - "~/Library/Frameworks"
+        - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/Library/Frameworks"
+        - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/Network/Library/Frameworks"
+        - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+        - "/Library/Developer/CommandLineTools/Library/Frameworks"
+        - "/Library/Developer/CommandLineTools/Library/Frameworks"
+        - "/Library/Frameworks"
+        - "/Network/Library/Frameworks"
+        - "/System/Library/Frameworks"
+  -
+    kind: "find-v1"
+    backtrace:
+      - "CMakeLists.txt:21 (find_path)"
+    mode: "path"
+    variable: "MOSQUITTO_INCLUDE"
+    description: "Path to a file."
+    settings:
+      SearchFramework: "FIRST"
+      SearchAppBundle: "FIRST"
+      CMAKE_FIND_USE_CMAKE_PATH: true
+      CMAKE_FIND_USE_CMAKE_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_SYSTEM_ENVIRONMENT_PATH: true
+      CMAKE_FIND_USE_CMAKE_SYSTEM_PATH: true
+      CMAKE_FIND_USE_INSTALL_PREFIX: true
+    names:
+      - "mosquitto.h"
+    candidate_directories:
+      - "/Users/davidgu/.local/bin/"
+      - "/Users/davidgu/.antigravity/antigravity/bin/"
+      - "/Users/davidgu/.nvm/versions/node/v22.12.0/bin/"
+      - "/usr/local/go/bin/"
+      - "/opt/homebrew/opt/python@3.14/libexec/bin/"
+      - "/Library/Frameworks/Python.framework/Versions/3.13/bin/"
+      - "/opt/homebrew/bin/"
+      - "/opt/homebrew/sbin/"
+      - "/usr/local/bin/"
+      - "/System/Cryptexes/App/usr/bin/"
+      - "/usr/bin/"
+      - "/bin/"
+      - "/usr/sbin/"
+      - "/sbin/"
+      - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin/"
+      - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin/"
+      - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/"
+      - "/opt/pmk/env/global/bin/"
+      - "/Library/Apple/usr/bin/"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/"
+      - "/opt/homebrew/include/"
+      - "/opt/homebrew/"
+      - "/usr/local/include/"
+      - "/usr/local/"
+      - "/usr/include/"
+      - "/usr/"
+      - "/include/"
+      - "/usr/X11R6/include/"
+      - "/usr/X11R6/"
+      - "/usr/pkg/include/"
+      - "/usr/pkg/"
+      - "/opt/include/"
+      - "/opt/"
+      - "/sw/include/"
+      - "/sw/"
+      - "/opt/local/include/"
+      - "/opt/local/"
+      - "/usr/include/X11/"
+      - "/Users/davidgu/Library/Frameworks/"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/Library/Frameworks/"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/Network/Library/Frameworks/"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/"
+      - "/Library/Developer/CommandLineTools/Library/Frameworks/"
+      - "/Library/Frameworks/"
+      - "/Network/Library/Frameworks/"
+      - "/System/Library/Frameworks/"
+    searched_directories:
+      - "/Users/davidgu/.local/bin/mosquitto.h"
+      - "/Users/davidgu/.antigravity/antigravity/bin/mosquitto.h"
+      - "/Users/davidgu/.nvm/versions/node/v22.12.0/bin/mosquitto.h"
+      - "/usr/local/go/bin/mosquitto.h"
+      - "/opt/homebrew/opt/python@3.14/libexec/bin/mosquitto.h"
+      - "/Library/Frameworks/Python.framework/Versions/3.13/bin/mosquitto.h"
+      - "/opt/homebrew/bin/mosquitto.h"
+      - "/opt/homebrew/sbin/mosquitto.h"
+      - "/usr/local/bin/mosquitto.h"
+      - "/System/Cryptexes/App/usr/bin/mosquitto.h"
+      - "/usr/bin/mosquitto.h"
+      - "/bin/mosquitto.h"
+      - "/usr/sbin/mosquitto.h"
+      - "/sbin/mosquitto.h"
+      - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin/mosquitto.h"
+      - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin/mosquitto.h"
+      - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin/mosquitto.h"
+      - "/opt/pmk/env/global/bin/mosquitto.h"
+      - "/Library/Apple/usr/bin/mosquitto.h"
+      - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin/mosquitto.h"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/mosquitto.h"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/mosquitto.h"
+      - "/opt/homebrew/include/mosquitto.h"
+      - "/opt/homebrew/mosquitto.h"
+      - "/usr/local/include/mosquitto.h"
+      - "/usr/local/mosquitto.h"
+      - "/usr/include/mosquitto.h"
+      - "/usr/mosquitto.h"
+      - "/include/mosquitto.h"
+      - "/usr/X11R6/include/mosquitto.h"
+      - "/usr/X11R6/mosquitto.h"
+      - "/usr/pkg/include/mosquitto.h"
+      - "/usr/pkg/mosquitto.h"
+      - "/opt/include/mosquitto.h"
+      - "/opt/mosquitto.h"
+      - "/sw/include/mosquitto.h"
+      - "/sw/mosquitto.h"
+      - "/opt/local/include/mosquitto.h"
+      - "/opt/local/mosquitto.h"
+      - "/usr/include/X11/mosquitto.h"
+      - "/Users/davidgu/Library/Frameworks/mosquitto.h"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/Library/Frameworks/mosquitto.h"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/Network/Library/Frameworks/mosquitto.h"
+      - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks/mosquitto.h"
+      - "/Library/Developer/CommandLineTools/Library/Frameworks/mosquitto.h"
+      - "/Library/Frameworks/mosquitto.h"
+      - "/Network/Library/Frameworks/mosquitto.h"
+      - "/System/Library/Frameworks/mosquitto.h"
+    found: false
+    search_context:
+      ENV{PATH}:
+        - "/Users/davidgu/.local/bin"
+        - "/Users/davidgu/.antigravity/antigravity/bin"
+        - "/Users/davidgu/.nvm/versions/node/v22.12.0/bin"
+        - "/usr/local/go/bin"
+        - "/opt/homebrew/opt/python@3.14/libexec/bin"
+        - "/Library/Frameworks/Python.framework/Versions/3.13/bin"
+        - "/opt/homebrew/bin"
+        - "/opt/homebrew/sbin"
+        - "/usr/local/bin"
+        - "/System/Cryptexes/App/usr/bin"
+        - "/usr/bin"
+        - "/bin"
+        - "/usr/sbin"
+        - "/sbin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin"
+        - "/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin"
+        - "/opt/pmk/env/global/bin"
+        - "/Library/Apple/usr/bin"
+        - "/usr/local/go/bin"
+        - "/Users/davidgu/.claude/plugins/cache/claude-plugins-official/clangd-lsp/1.0.0/bin"
+      CMAKE_INSTALL_PREFIX: "/usr/local"
+      CMAKE_SYSTEM_PREFIX_PATH:
+        - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr"
+        - "/opt/homebrew"
+        - "/usr/local"
+        - "/usr"
+        - "/"
+        - "/opt/homebrew"
+        - "/usr/local"
+        - "/usr/X11R6"
+        - "/usr/pkg"
+        - "/opt"
+        - "/sw"
+        - "/opt/local"
+      CMAKE_SYSTEM_INCLUDE_PATH:
+        - "/usr/include/X11"
+      CMAKE_SYSTEM_FRAMEWORK_PATH:
+        - "~/Library/Frameworks"
+        - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/Library/Frameworks"
+        - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/Network/Library/Frameworks"
+        - "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
+        - "/Library/Developer/CommandLineTools/Library/Frameworks"
+        - "/Library/Developer/CommandLineTools/Library/Frameworks"
+        - "/Library/Frameworks"
+        - "/Network/Library/Frameworks"
+        - "/System/Library/Frameworks"
 ...

@@ -22,7 +22,7 @@ class RobotClient:
             uuid="my-robot-001",
             private_key_hex="abcdef...",
             host="localhost",
-            tcp_port=5000,
+            tcp_port=5002,
         )
         client.authenticate()
         client.start_heartbeat(interval=30)
@@ -35,7 +35,7 @@ class RobotClient:
         uuid: str,
         private_key_hex: str,
         host: str = "localhost",
-        tcp_port: int = 5000,
+        tcp_port: int = 5002,
         device_type: str | None = None,
     ):
         self.uuid = uuid
@@ -48,6 +48,7 @@ class RobotClient:
         self._sock: socket.socket | None = None
         self._jwt: str | None = None
         self._heartbeat_seq = 0
+        self._heartbeat_lock = threading.Lock()
         self._heartbeat_thread: threading.Thread | None = None
         self._heartbeat_stop = threading.Event()
         self._recv_thread: threading.Thread | None = None
@@ -228,8 +229,10 @@ class RobotClient:
         Heartbeats are independent of the session connection and must be sent
         on their own connection (session mode forwards all lines to the handler).
         """
-        self._heartbeat_seq += 1
-        payload: dict = {"seq": self._heartbeat_seq}
+        with self._heartbeat_lock:
+            self._heartbeat_seq += 1
+            seq = self._heartbeat_seq
+        payload: dict = {"seq": seq}
         if ttl is not None:
             payload["ttl"] = ttl
         if extra_data is not None:

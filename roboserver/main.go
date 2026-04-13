@@ -15,6 +15,7 @@ import (
 	"roboserver/shared/utils"
 	"roboserver/tcp_server"
 	"roboserver/terminal"
+	"roboserver/udp_server"
 	"sync"
 	"syscall"
 	"time"
@@ -103,6 +104,16 @@ func main() {
 	go func() {
 		defer wg.Done()
 		if err := tcp_server.Start(ctx, bus, dbManager); err != nil {
+			shared.DebugError(err)
+			cancel()
+		}
+	}()
+
+	// Start UDP server
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err := udp_server.Start(ctx, bus, dbManager); err != nil {
 			shared.DebugError(err)
 			cancel()
 		}

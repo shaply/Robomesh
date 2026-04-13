@@ -36,6 +36,10 @@ type HandlerProcess struct {
 	mu     sync.Mutex
 	closed bool
 
+	// writeCh buffers messages for the dedicated stdin writer goroutine,
+	// preventing mutex blocking when the handler script stalls (BUG-013).
+	writeCh chan []byte
+
 	// RobotSend is called to send data back to the robot's TCP connection.
 	RobotSend func(data []byte) error
 
@@ -117,7 +121,11 @@ func SpawnHandlerProcess(
 		rds:        rds,
 		bus:        bus,
 		RobotSend:  robotSend,
+		writeCh:    make(chan []byte, 256),
 	}
+
+	// Start dedicated stdin writer goroutine (decouples senders from blocking pipe writes)
+	go hp.stdinWriter()
 
 	// Store PID in Redis
 	if rds != nil {
@@ -225,8 +233,11 @@ func (hp *HandlerProcess) SendDisconnect(reason string) {
 		return
 	}
 	data = append(data, '\n')
-	if _, err := hp.stdin.Write(data); err != nil {
-		shared.DebugPrint("Failed to send disconnect to handler %s: %v", hp.UUID, err)
+
+	select {
+	case hp.writeCh <- data:
+	default:
+		shared.DebugPrint("Handler %s write buffer full, dropping disconnect message", hp.UUID)
 	}
 }
 
@@ -238,14 +249,25 @@ func (hp *HandlerProcess) Stop(reason string) {
 		return
 	}
 	hp.closed = true
-	hp.mu.Unlock()
 
-	// Send disconnect message
-	hp.sendToScript(&DisconnectMessage{
+	// Send disconnect message while channel is still open (under lock to
+	// prevent racing with close). This fixes a prior bug where the disconnect
+	// was silently dropped because sendToScript checked closed=true.
+	data, _ := json.Marshal(&DisconnectMessage{
 		Type:   MsgTypeDisconnect,
 		UUID:   hp.UUID,
 		Reason: reason,
 	})
+	data = append(data, '\n')
+	select {
+	case hp.writeCh <- data:
+	default:
+	}
+	hp.mu.Unlock()
+
+	// Close the write channel — no more sends after closed=true,
+	// so the writer goroutine will drain remaining messages and exit.
+	close(hp.writeCh)
 
 	// Give the script time to clean up
 	done := make(chan struct{})
@@ -265,6 +287,7 @@ func (hp *HandlerProcess) Stop(reason string) {
 		hp.cancel()
 	}
 
+	// Close stdin — this also unblocks any pending write in the writer goroutine
 	hp.stdin.Close()
 
 	// Wait for background goroutines (reverse connections) to finish
@@ -285,20 +308,35 @@ func (hp *HandlerProcess) Stop(reason string) {
 }
 
 func (hp *HandlerProcess) sendToScript(msg interface{}) {
-	hp.mu.Lock()
-	defer hp.mu.Unlock()
-	if hp.closed {
-		return
-	}
-
 	data, err := json.Marshal(msg)
 	if err != nil {
 		shared.DebugPrint("Failed to marshal message for handler %s: %v", hp.UUID, err)
 		return
 	}
 	data = append(data, '\n')
-	if _, err := hp.stdin.Write(data); err != nil {
-		shared.DebugPrint("Failed to write to handler stdin %s: %v", hp.UUID, err)
+
+	hp.mu.Lock()
+	defer hp.mu.Unlock()
+	if hp.closed {
+		return
+	}
+
+	select {
+	case hp.writeCh <- data:
+	default:
+		shared.DebugPrint("Handler %s write buffer full, dropping message", hp.UUID)
+	}
+}
+
+// stdinWriter is a dedicated goroutine that drains the write channel and
+// writes to the handler's stdin pipe. This decouples message senders from
+// potentially blocking pipe writes, preventing mutex stalls (BUG-013).
+func (hp *HandlerProcess) stdinWriter() {
+	for data := range hp.writeCh {
+		if _, err := hp.stdin.Write(data); err != nil {
+			shared.DebugPrint("Failed to write to handler stdin %s: %v", hp.UUID, err)
+			return
+		}
 	}
 }
 
@@ -379,6 +417,11 @@ func (hp *HandlerProcess) routeEnvelope(ctx context.Context, env *JSONRPCEnvelop
 	}
 }
 
+// redisDataKey generates the Redis key used to store arbitrary handler data.
+func (hp *HandlerProcess) redisDataKey(key string) string {
+	return fmt.Sprintf("handler:%s:data:%s", hp.UUID, key)
+}
+
 func (hp *HandlerProcess) handleDatabaseRequest(ctx context.Context, env *JSONRPCEnvelope) {
 	switch env.Method {
 	case "get_robot":
@@ -433,8 +476,7 @@ func (hp *HandlerProcess) handleDatabaseRequest(ctx context.Context, env *JSONRP
 		}
 		// Store in Redis with handler-scoped key
 		if hp.rds != nil {
-			redisKey := fmt.Sprintf("handler:%s:data:%s", hp.UUID, key)
-			if err := hp.rds.Client.Set(ctx, redisKey, value, 0).Err(); err != nil {
+			if err := hp.rds.Client.Set(ctx, hp.redisDataKey(key), value, 0).Err(); err != nil {
 				hp.sendResponse(env.ID, nil, err.Error())
 				return
 			}
@@ -448,8 +490,7 @@ func (hp *HandlerProcess) handleDatabaseRequest(ctx context.Context, env *JSONRP
 			return
 		}
 		if hp.rds != nil {
-			redisKey := fmt.Sprintf("handler:%s:data:%s", hp.UUID, key)
-			val, err := hp.rds.Client.Get(ctx, redisKey).Result()
+			val, err := hp.rds.Client.Get(ctx, hp.redisDataKey(key)).Result()
 			if err != nil {
 				hp.sendResponse(env.ID, nil, err.Error())
 				return
@@ -472,8 +513,10 @@ func (hp *HandlerProcess) handleDatabaseRequest(ctx context.Context, env *JSONRP
 			return
 		}
 		if hp.rds != nil {
-			redisKey := fmt.Sprintf("handler:%s:data:%s", hp.UUID, key)
-			hp.rds.Client.Del(ctx, redisKey)
+			if err := hp.rds.Client.Del(ctx, hp.redisDataKey(key)).Err(); err != nil {
+				hp.sendResponse(env.ID, nil, err.Error())
+				return
+			}
 		}
 		hp.sendResponse(env.ID, "deleted", "")
 
@@ -483,22 +526,29 @@ func (hp *HandlerProcess) handleDatabaseRequest(ctx context.Context, env *JSONRP
 }
 
 func (hp *HandlerProcess) handleRobotRequest(env *JSONRPCEnvelope) {
-	if hp.RobotSend == nil {
-		hp.sendResponse(env.ID, nil, "no robot connection available")
-		return
-	}
-
 	data, err := json.Marshal(env.Data)
 	if err != nil {
 		hp.sendResponse(env.ID, nil, "failed to marshal robot payload")
 		return
 	}
 
-	if err := hp.RobotSend(data); err != nil {
+	if err := hp.SendToRobot(data); err != nil {
 		hp.sendResponse(env.ID, nil, err.Error())
 		return
 	}
 	hp.sendResponse(env.ID, "sent", "")
+}
+
+// SendToRobot safely copies the RobotSend callback under lock, then calls it.
+// This prevents a data race with concurrent SendDisconnect/Reattach calls.
+func (hp *HandlerProcess) SendToRobot(data []byte) error {
+	hp.mu.Lock()
+	send := hp.RobotSend
+	hp.mu.Unlock()
+	if send == nil {
+		return fmt.Errorf("no robot connection available")
+	}
+	return send(data)
 }
 
 func (hp *HandlerProcess) handleEventBusRequest(env *JSONRPCEnvelope) {

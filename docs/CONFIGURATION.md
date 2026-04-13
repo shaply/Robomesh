@@ -9,7 +9,8 @@ Access in code via `shared.AppConfig`.
 ```yaml
 server:
   http_port: 8080
-  tcp_port: 5000
+  tcp_port: 5002
+  udp_port: 5001
   mqtt_port: 1883
   terminal_port: 6000
   debug: false
@@ -22,9 +23,10 @@ server:
 | --- | --- |
 | `HTTP_PORT` | HTTP server port |
 | `TCP_PORT` | TCP server port |
+| `UDP_PORT` | UDP server port |
 | `MQTT_PORT` | MQTT server port |
 | `TERMINAL_PORT` | Terminal server port |
-| `DEBUG_MODE` | Enable debug logging (`true`/`false`) |
+| `DEBUG` | Enable debug logging (`true`/`false`) |
 | `ALLOWED_ORIGINS` | Comma-separated list of CORS origins |
 
 ## Database
@@ -35,7 +37,11 @@ database:
     host: "localhost"
     port: 5432
     user: "robomesh"
-    db_name: "robomesh"
+    database: "robomesh_db"
+    ssl_mode: "disable"
+    max_open_conns: 10
+    max_idle_conns: 5
+    conn_max_lifetime: "1h"
   redis:
     host: "localhost"
     port: 6379
@@ -51,9 +57,11 @@ database:
 | `POSTGRES_USER` | PostgreSQL user |
 | `POSTGRES_PASSWORD` | PostgreSQL password |
 | `POSTGRES_DB` | PostgreSQL database name |
+| `POSTGRES_SSL_MODE` | PostgreSQL SSL mode (default: `disable`) |
 | `REDIS_HOST` | Redis host |
 | `REDIS_PORT` | Redis port |
 | `REDIS_PASSWORD` | Redis password |
+| `REDIS_DB` | Redis database number (default: `0`) |
 
 **TTL configuration:**
 
@@ -64,8 +72,11 @@ database:
 
 ```yaml
 auth:
-  jwt_secret: ""
+  jwt_expiry: 3600
+  nonce_length: 32
 ```
+
+`jwt_secret` is loaded exclusively from the `JWT_SECRET` environment variable (not from YAML).
 
 | Env Var | Description |
 | --- | --- |
@@ -105,6 +116,9 @@ timeouts:
 | `robot:{uuid}:heartbeat` | JSON | Per-heartbeat | Heartbeat state (UUID, IP, LastSeq, LastSeen) |
 | `robot:{uuid}:pending` | JSON | 5 min | Pending registration |
 | `robot:{uuid}:pubkey` | String | 5 min | Public key storage during REGISTER flow |
+| `mqtt:nonce:{uuid}` | String | 30s | MQTT auth nonce + cached robot info (`nonce\|publicKey\|deviceType`) |
+| `udp:nonce:{uuid}` | String | 30s | UDP auth nonce + cached robot info (`nonce\|publicKey\|deviceType`) |
+| `handler:{uuid}:data:{key}` | String | None | Handler-scoped custom data storage |
 | `user:{username}` | JSON | None | User credentials (bcrypt hashed) |
 | `session:{token}` | String | `user_session_ttl` | User session for server-side invalidation |
 | `ticket:{ticket}` | String | 30s | Single-use SSE ticket |
@@ -114,10 +128,9 @@ timeouts:
 1. Load config from `config.yaml` + env vars
 2. Initialize event bus
 3. Connect databases (PostgreSQL + Redis)
-4. Run PostgreSQL migrations
-5. Seed default admin user (if not exists)
-6. Initialize comm bus
-7. Start 4 concurrent servers: Terminal, HTTP, TCP, MQTT
+4. Seed default admin user (if not exists)
+5. Initialize comm bus
+6. Start 5 concurrent servers: Terminal, HTTP, TCP, UDP, MQTT
 
 ## Graceful Shutdown
 

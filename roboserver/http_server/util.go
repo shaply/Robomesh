@@ -6,6 +6,11 @@ import (
 	"roboserver/shared"
 )
 
+// maxRequestBodySize limits JSON request bodies to 1 MB to prevent memory
+// exhaustion from oversized payloads. Individual endpoints can override this
+// by calling http.MaxBytesReader directly before decoding.
+const maxRequestBodySize = 1 << 20 // 1 MB
+
 func sendResponseAsJSON(w http.ResponseWriter, data interface{}, status int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)

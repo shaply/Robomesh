@@ -62,6 +62,7 @@ func (t *TimeoutsConfig) ReverseConnectTimeout() time.Duration {
 type ServerConfig struct {
 	HTTPPort       int       `yaml:"http_port"`
 	TCPPort        int       `yaml:"tcp_port"`
+	UDPPort        int       `yaml:"udp_port"`
 	MQTTPort       int       `yaml:"mqtt_port"`
 	TerminalPort   int       `yaml:"terminal_port"`
 	Debug          bool      `yaml:"debug"`
@@ -153,7 +154,8 @@ func defaultConfig() Config {
 	return Config{
 		Server: ServerConfig{
 			HTTPPort:       8080,
-			TCPPort:        5000,
+			TCPPort:        5002,
+			UDPPort:        5001,
 			MQTTPort:       1883,
 			TerminalPort:   6000,
 			Debug:          false,
@@ -213,6 +215,7 @@ func applyEnvOverrides(cfg *Config) {
 	envBool("DEBUG", &cfg.Server.Debug)
 	envInt("HTTP_PORT", &cfg.Server.HTTPPort)
 	envInt("TCP_PORT", &cfg.Server.TCPPort)
+	envInt("UDP_PORT", &cfg.Server.UDPPort)
 	envInt("MQTT_PORT", &cfg.Server.MQTTPort)
 	envInt("TERMINAL_PORT", &cfg.Server.TerminalPort)
 

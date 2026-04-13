@@ -288,19 +288,24 @@ func (h *protocolHook) handleAuth(cl *mqtt.Client, uuid string, payload []byte) 
 		return
 	}
 
-	// Spawn handler if not already running
-	if !handler_engine.HandlerManager.Has(uuid) {
-		robotSend := func(data []byte) error {
-			topic := fmt.Sprintf("robomesh/to_robot/%s", uuid)
-			return h.mqtt.server.Publish(topic, data, false, 0)
-		}
+	// Spawn or reattach handler
+	robotSend := func(data []byte) error {
+		topic := fmt.Sprintf("robomesh/to_robot/%s", uuid)
+		return h.mqtt.server.Publish(topic, data, false, 0)
+	}
 
+	if existing, ok := handler_engine.HandlerManager.Get(uuid); ok {
+		// Handler already running — reattach with updated MQTT send callback
+		existing.Reattach(robotSend, ip, sessionID)
+		shared.DebugPrint("MQTT: Robot %s reattached to existing handler (PID %d)", uuid, existing.PID)
+	} else if handler_engine.HandlerManager.TryStartSpawning(uuid) {
 		_, spawnErr := handler_engine.SpawnHandlerProcess(
 			h.mqtt.ctx,
 			uuid, deviceType, ip, sessionID,
 			pg, rds, h.mqtt.bus,
 			robotSend,
 		)
+		handler_engine.HandlerManager.FinishSpawning(uuid)
 		if spawnErr != nil {
 			shared.DebugPrint("MQTT: Failed to spawn handler for %s: %v", uuid, spawnErr)
 		}
@@ -335,7 +340,7 @@ func (h *protocolHook) handleHeartbeat(uuid string, payload []byte, cl *mqtt.Cli
 	if err != nil {
 		shared.DebugPrint("MQTT heartbeat failed for %s: %v", uuid, err)
 		responseTopic := fmt.Sprintf("robomesh/heartbeat/%s/response", uuid)
-		h.publishJSON(responseTopic, map[string]string{"status": "error", "error": err.Error()})
+		h.publishJSON(responseTopic, map[string]string{"status": "error", "error": "heartbeat rejected"})
 		return
 	}
 
@@ -349,7 +354,22 @@ func (h *protocolHook) handleHeartbeat(uuid string, payload []byte, cl *mqtt.Cli
 }
 
 // handleMessage forwards a message from an MQTT-connected robot to its handler.
+// Verifies the robot has an active session before forwarding.
 func (h *protocolHook) handleMessage(uuid string, payload []byte) {
+	// Verify robot has an active session (completed auth flow)
+	db := h.mqtt.db
+	if db == nil {
+		return
+	}
+	rds := db.Redis()
+	if rds == nil {
+		return
+	}
+	if active, err := rds.GetActiveRobot(h.mqtt.ctx, uuid); active == nil || err != nil {
+		shared.DebugPrint("MQTT message rejected: no active session for %s", uuid)
+		return
+	}
+
 	hp, ok := handler_engine.HandlerManager.Get(uuid)
 	if !ok {
 		shared.DebugPrint("MQTT message: no handler for %s", uuid)

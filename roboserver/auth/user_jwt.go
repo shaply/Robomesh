@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -77,7 +78,7 @@ func ValidateUserJWT(tokenStr string) (*UserJWTClaims, error) {
 	mac := hmac.New(sha256.New, []byte(secret))
 	mac.Write([]byte(signingInput))
 	expectedSig := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
-	if parts[2] != expectedSig {
+	if subtle.ConstantTimeCompare([]byte(parts[2]), []byte(expectedSig)) != 1 {
 		return nil, ErrTokenInvalid
 	}
 

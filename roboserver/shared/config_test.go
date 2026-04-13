@@ -12,8 +12,8 @@ func TestDefaultConfig(t *testing.T) {
 	if cfg.Server.HTTPPort != 8080 {
 		t.Errorf("Expected default HTTP port 8080, got %d", cfg.Server.HTTPPort)
 	}
-	if cfg.Server.TCPPort != 5000 {
-		t.Errorf("Expected default TCP port 5000, got %d", cfg.Server.TCPPort)
+	if cfg.Server.TCPPort != 5002 {
+		t.Errorf("Expected default TCP port 5002, got %d", cfg.Server.TCPPort)
 	}
 	if cfg.Server.MQTTPort != 1883 {
 		t.Errorf("Expected default MQTT port 1883, got %d", cfg.Server.MQTTPort)
