@@ -1,7 +1,7 @@
 """Integration tests for the Robomesh Python SDK.
 
 Requires a running roboserver (use docker-compose.dev.yml).
-Default dev server: TCP on localhost:5001, HTTP on localhost:8080.
+Default dev server: TCP on localhost:5002, HTTP on localhost:8080.
 
 Run:
     cd robot_sdk/python
@@ -20,7 +20,7 @@ from robomesh_sdk.client import AuthError, HeartbeatError
 
 # Connection settings (override with env vars for different setups)
 HOST = os.environ.get("ROBOMESH_HOST", "localhost")
-TCP_PORT = int(os.environ.get("ROBOMESH_TCP_PORT", "5001"))
+TCP_PORT = int(os.environ.get("ROBOMESH_TCP_PORT", "5002"))
 HTTP_PORT = int(os.environ.get("ROBOMESH_HTTP_PORT", "8080"))
 ADMIN_USER = os.environ.get("ROBOMESH_ADMIN_USER", "admin")
 ADMIN_PASS = os.environ.get("ROBOMESH_ADMIN_PASS", "password1")

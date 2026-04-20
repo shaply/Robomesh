@@ -2,7 +2,7 @@
  * Integration tests for the Robomesh C SDK.
  *
  * Requires a running roboserver (use docker-compose.dev.yml).
- * Default: TCP on localhost:5001, HTTP on localhost:8080.
+ * Default: TCP on localhost:5002, HTTP on localhost:8080.
  *
  * Build:
  *   cd robot_sdk/c && mkdir build && cd build
@@ -22,7 +22,7 @@
 #include <sys/wait.h>
 
 static const char *HOST = "localhost";
-static int TCP_PORT = 5001;
+static int TCP_PORT = 5002;
 static int HTTP_PORT = 8080;
 
 static int tests_passed = 0;

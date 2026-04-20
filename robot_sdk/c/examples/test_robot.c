@@ -5,7 +5,7 @@
  *
  * Usage:
  *   ./test_robot [host] [tcp_port]
- *   Default: localhost:5001
+ *   Default: localhost:5002
  */
 
 #include "robomesh.h"
@@ -24,7 +24,7 @@ static void sigint_handler(int sig) {
 
 int main(int argc, char *argv[]) {
     const char *host = argc > 1 ? argv[1] : "localhost";
-    int tcp_port = argc > 2 ? atoi(argv[2]) : 5001;
+    int tcp_port = argc > 2 ? atoi(argv[2]) : 5002;
 
     /* 1. Generate keypair */
     robomesh_keypair_t kp;

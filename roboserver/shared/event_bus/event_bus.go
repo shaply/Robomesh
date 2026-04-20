@@ -3,9 +3,14 @@ package event_bus
 import (
 	"roboserver/shared"
 	"roboserver/shared/data_structures"
+	"sync/atomic"
 )
 
-var limiter = make(chan bool, shared.EVENT_BUS_BUFFER_SIZE) // Channel to limit event bus publishing rate
+// inFlight counts concurrent handler goroutines. Publishers drop events
+// rather than block once we hit EVENT_BUS_BUFFER_SIZE, so a slow/stuck
+// subscriber can never stall the publish path (and therefore the server's
+// network goroutines that call into it).
+var inFlight atomic.Int64
 
 func NewEventBus() EventBus {
 	return &EventBus_t{
@@ -68,20 +73,32 @@ func (eb *EventBus_t) Publish(event Event) {
 	shared.DebugPrint("Publishing event: %s", eventType)
 
 	if subscribers, ok := eb.subscriptions.Get(eventType); ok {
-		ch := subscribers.Iterate()
-		for sub := range ch {
+		for _, sub := range subscribers.Snapshot() {
 			if mp, ok := eb.handlers.Get(sub); ok {
 				if handler, ok := mp.Get(eventType); ok {
-					limiter <- true // Limit the number of concurrent handlers
+					// Non-blocking backpressure: drop rather than stall the publisher
+					// (which is usually a network goroutine).
+					if inFlight.Load() >= int64(shared.EVENT_BUS_BUFFER_SIZE) {
+						shared.DebugPrint("Event bus saturated, dropping event: %s", eventType)
+						continue
+					}
+					inFlight.Add(1)
 					go func() {
-						defer func() { <-limiter }()
+						defer func() {
+							inFlight.Add(-1)
+							if r := recover(); r != nil {
+								shared.DebugPrint("Event handler panic on %s: %v", eventType, r)
+							}
+						}()
 						handler(event)
 					}()
 				} else {
-					go eb.Unsubscribe(eventType, &sub) // Unsubscribe if handler not found
+					subCopy := sub
+					go eb.Unsubscribe(eventType, &subCopy) // Unsubscribe if handler not found
 				}
 			} else {
-				go eb.Unsubscribe(eventType, &sub) // Unsubscribe if subscriber not found
+				subCopy := sub
+				go eb.Unsubscribe(eventType, &subCopy) // Unsubscribe if subscriber not found
 			}
 		}
 	}

@@ -33,17 +33,30 @@ func (s *SafeSet[T]) Remove(value T) {
 	s.mp.Delete(value)
 }
 
-// Iterate returns a channel that yields all values in the set
+// Iterate returns a channel that yields all values in the set.
+// Implemented as a snapshot so early break by the caller does not leak a
+// goroutine blocked on a channel send.
 // Usage: for value := range set.Iterate() { ... }
 func (s *SafeSet[T]) Iterate() <-chan T {
-	ch := make(chan T)
-	go func(ch chan T) {
-		defer close(ch)
-		for node := s.head.GetRight(); node != nil; node = node.GetRight() {
-			ch <- node.GetValue()
-		}
-	}(ch)
+	snap := s.Snapshot()
+	ch := make(chan T, len(snap))
+	for _, v := range snap {
+		ch <- v
+	}
+	close(ch)
 	return ch
+}
+
+// Snapshot returns a point-in-time copy of all values in the set.
+// Safe to traverse without holding any lock.
+func (s *SafeSet[T]) Snapshot() []T {
+	s.writeMu.Lock()
+	defer s.writeMu.Unlock()
+	out := make([]T, 0)
+	for node := s.head.next; node != nil; node = node.next {
+		out = append(out, node.value)
+	}
+	return out
 }
 
 func (s *SafeSet[T]) IsEmpty() bool {

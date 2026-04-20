@@ -28,9 +28,18 @@ type HandshakeResult struct {
 //  5. Server verifies signature against stored public key
 //  6. Server issues a session JWT and registers in Redis
 func PerformHandshake(ctx context.Context, conn net.Conn, db *database.PostgresHandler, rds *database.RedisHandler) (*HandshakeResult, error) {
-	scanner := bufio.NewScanner(conn)
-	scanner.Buffer(make([]byte, 0, bufio.MaxScanTokenSize), 64*1024)
-	ip := conn.RemoteAddr().(*net.TCPAddr).IP.String()
+	return PerformHandshakeWithScanner(ctx, conn, nil, db, rds)
+}
+
+// PerformHandshakeWithScanner runs the handshake using a caller-provided scanner
+// so that any bytes already buffered by the outer read loop (e.g. in tcp_server's
+// handleConnection) are not lost between scanners. Pass nil to allocate a fresh one.
+func PerformHandshakeWithScanner(ctx context.Context, conn net.Conn, scanner *bufio.Scanner, db *database.PostgresHandler, rds *database.RedisHandler) (*HandshakeResult, error) {
+	if scanner == nil {
+		scanner = bufio.NewScanner(conn)
+		scanner.Buffer(make([]byte, 0, bufio.MaxScanTokenSize), 64*1024)
+	}
+	ip := connIP(conn)
 
 	// Step 1: Receive UUID
 	conn.Write([]byte("AUTH_CHALLENGE\n"))
@@ -111,6 +120,23 @@ func PerformHandshake(ctx context.Context, conn net.Conn, db *database.PostgresH
 		SessionJWT: jwt,
 		SessionID:  sessionID,
 	}, nil
+}
+
+// connIP extracts the client IP from a net.Conn, gracefully handling
+// non-TCP addresses (e.g. TLS-wrapped connections in tests).
+func connIP(conn net.Conn) string {
+	addr := conn.RemoteAddr()
+	if addr == nil {
+		return ""
+	}
+	if tcp, ok := addr.(*net.TCPAddr); ok {
+		return tcp.IP.String()
+	}
+	host, _, err := net.SplitHostPort(addr.String())
+	if err != nil {
+		return addr.String()
+	}
+	return host
 }
 
 // VerifyRobotSignature tries PEM first, then raw hex Ed25519.

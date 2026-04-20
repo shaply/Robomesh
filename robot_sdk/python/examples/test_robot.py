@@ -32,7 +32,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(message
 logger = logging.getLogger("test_robot")
 
 HOST = os.environ.get("ROBOMESH_HOST", "localhost")
-TCP_PORT = int(os.environ.get("ROBOMESH_TCP_PORT", "5001"))
+TCP_PORT = int(os.environ.get("ROBOMESH_TCP_PORT", "5002"))
 HTTP_PORT = int(os.environ.get("ROBOMESH_HTTP_PORT", "8080"))
 
 

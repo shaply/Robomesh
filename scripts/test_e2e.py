@@ -18,6 +18,7 @@ Usage:
 """
 
 import json
+import os
 import socket
 import sys
 import threading
@@ -27,9 +28,9 @@ import urllib.request
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives import serialization
 
-HOST = "localhost"
-TCP_PORT = 5001
-HTTP_PORT = 8080
+HOST = os.environ.get("ROBOMESH_HOST", "localhost")
+TCP_PORT = int(os.environ.get("ROBOMESH_TCP_PORT", "5002"))
+HTTP_PORT = int(os.environ.get("ROBOMESH_HTTP_PORT", "8080"))
 AUTH_TOKEN = "jwt-token-user-123"  # Matches the placeholder auth in auth.go
 
 # Test keypair (matches seed.sql for example-001)

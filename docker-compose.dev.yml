@@ -1,4 +1,4 @@
-# Unified local development stack: PostgreSQL + Redis + Backend
+# Unified local development stack: PostgreSQL + Redis + Backend + Frontend
 # Usage: docker compose -f docker-compose.dev.yml up --build
 services:
   postgres:
@@ -37,11 +37,23 @@ services:
   backend:
     build: ./roboserver
     ports:
-      - "8080:8080"
-      - "5001:5002"
-      - "6001:6000"
+      - "${HTTP_PORT:-8080}:${HTTP_PORT:-8080}"
+      - "${TCP_PORT:-5002}:${TCP_PORT:-5002}"
+      - "${UDP_PORT:-5001}:${UDP_PORT:-5001}/udp"
+      - "${MQTT_PORT:-1883}:${MQTT_PORT:-1883}"
+      - "${TERMINAL_PORT:-6000}:${TERMINAL_PORT:-6000}"
+    env_file:
+      - path: defaults.env
+        required: true
+      - path: .env
+        required: false
     environment:
       - DEBUG=true
+      - HTTP_PORT=${HTTP_PORT:-8080}
+      - TCP_PORT=${TCP_PORT:-5002}
+      - UDP_PORT=${UDP_PORT:-5001}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - TERMINAL_PORT=${TERMINAL_PORT:-6000}
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=robomesh
@@ -70,10 +82,10 @@ services:
       - ./frontend_app:/app
       - frontend_node_modules:/app/node_modules
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
     environment:
       - PUBLIC_BACKEND_IP=localhost
-      - PUBLIC_BACKEND_PORT=8080
+      - PUBLIC_BACKEND_PORT=${HTTP_PORT:-8080}
       - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend

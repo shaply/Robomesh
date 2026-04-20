@@ -17,6 +17,11 @@ type HeartbeatPayload struct {
 	ExtraData json.RawMessage `json:"extra_data,omitempty"` // Optional additional data
 }
 
+// MaxHeartbeatTTL caps how long a robot can request its heartbeat state stay
+// in Redis. Prevents a misbehaving (or hostile) robot from pinning state
+// forever with an absurd TTL and filling Redis.
+const MaxHeartbeatTTL = 6 * time.Hour
+
 // HeartbeatResult contains the processed heartbeat information.
 type HeartbeatResult struct {
 	UUID    string
@@ -57,10 +62,14 @@ func ProcessHeartbeat(ctx context.Context, uuid, payloadJSON, signature, ip stri
 		return nil, fmt.Errorf("stale heartbeat sequence for %s: got %d, last was %d", uuid, payload.Seq, existing.LastSeq)
 	}
 
-	// Determine TTL
+	// Determine TTL, capped to prevent misbehaving robots from pinning Redis state.
 	ttl := shared.AppConfig.Database.Redis.TTL()
 	if payload.TTL > 0 {
-		ttl = time.Duration(payload.TTL) * time.Second
+		requested := time.Duration(payload.TTL) * time.Second
+		if requested > MaxHeartbeatTTL {
+			requested = MaxHeartbeatTTL
+		}
+		ttl = requested
 	}
 
 	// Update heartbeat state in Redis

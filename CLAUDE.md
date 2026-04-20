@@ -62,12 +62,24 @@ pip install -e .                # Install in editable mode
 python examples/test_robot.py   # Example robot
 ```
 
+### Integration Tests (tests/integration/)
+```bash
+# Requires running roboserver (docker-compose.dev.yml)
+./tests/integration/run.sh              # Run all tests
+./tests/integration/run.sh -k tcp       # Run only TCP tests
+./tests/integration/run.sh -k health    # Health checks only
+cd tests/integration && pytest -v       # Run directly with pytest
+```
+
 ### Docker Compose
 ```bash
 cp .env.example .env            # Fill in POSTGRES_PASSWORD, REDIS_PASSWORD, JWT_SECRET
 docker compose up -d            # Start all services
 docker compose logs -f backend  # View logs
 ```
+
+### Configuration Defaults
+All default ports and settings are centralized in `defaults.env` at the project root. Docker Compose loads this automatically. To change a default port, edit `defaults.env` — it propagates to all Docker services. For non-Docker usage, `config.yaml` provides the same defaults.
 
 ## Architecture
 

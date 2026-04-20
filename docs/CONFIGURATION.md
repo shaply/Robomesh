@@ -2,6 +2,8 @@
 
 Configuration is layered: `config.yaml` defines structure and defaults, environment variables override any value. Env vars always take precedence.
 
+Default ports and settings are centralized in `defaults.env` at the project root. Docker Compose loads this automatically. When changing a port or default, update `defaults.env` — this propagates to all Docker services. For non-Docker usage, `config.yaml` provides the same defaults and can be overridden with env vars.
+
 Access in code via `shared.AppConfig`.
 
 ## Server

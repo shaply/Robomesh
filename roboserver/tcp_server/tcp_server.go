@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"roboserver/auth"
@@ -63,16 +64,34 @@ func Start(ctx context.Context, bus comms.Bus, dbManager database.DBManager) err
 
 	go func() {
 		shared.DebugPrint("TCP server listening on port %d", port)
+		var backoff time.Duration
 		for {
 			conn, err := listener.Accept()
 			if err != nil {
+				if errors.Is(err, net.ErrClosed) {
+					return
+				}
 				select {
 				case <-ctx.Done():
 					return
 				default:
-					continue
 				}
+				// Transient error: back off exponentially up to 1s so we don't
+				// burn CPU hot-looping on a persistent failure (e.g. fd exhaustion).
+				if backoff == 0 {
+					backoff = 5 * time.Millisecond
+				} else if backoff < time.Second {
+					backoff *= 2
+				}
+				shared.DebugPrint("TCP accept error: %v (retrying in %s)", err, backoff)
+				select {
+				case <-time.After(backoff):
+				case <-ctx.Done():
+					return
+				}
+				continue
 			}
+			backoff = 0
 			shared.DebugPrint("Accepted connection from %s", conn.RemoteAddr())
 			go s.handleConnection(conn)
 		}
@@ -88,9 +107,31 @@ func Start(ctx context.Context, bus comms.Bus, dbManager database.DBManager) err
 	return nil
 }
 
+// remoteIP safely extracts the IP from any net.Conn without panicking on
+// unexpected address types (e.g. Unix sockets, TLS wrappers in tests).
+func remoteIP(conn net.Conn) string {
+	addr := conn.RemoteAddr()
+	if addr == nil {
+		return ""
+	}
+	if tcp, ok := addr.(*net.TCPAddr); ok {
+		return tcp.IP.String()
+	}
+	host, _, err := net.SplitHostPort(addr.String())
+	if err != nil {
+		return addr.String()
+	}
+	return host
+}
+
 // handleConnection dispatches to AUTH or REGISTER based on the first command.
 func (s *TCPServer_t) handleConnection(conn net.Conn) {
-	defer conn.Close()
+	defer func() {
+		if r := recover(); r != nil {
+			shared.DebugPrint("TCP handler panic from %s: %v", conn.RemoteAddr(), r)
+		}
+		conn.Close()
+	}()
 
 	scanner := bufio.NewScanner(conn)
 	scanner.Buffer(make([]byte, 0, bufio.MaxScanTokenSize), MaxTCPMessageSize)
@@ -156,8 +197,9 @@ func (s *TCPServer_t) handleAuthAndSession(conn net.Conn, scanner *bufio.Scanner
 		return
 	}
 
-	// Perform cryptographic handshake (looks up robot in PostgreSQL)
-	result, err := auth.PerformHandshake(s.main_context, conn, pg, rds)
+	// Perform cryptographic handshake (looks up robot in PostgreSQL).
+	// Reuse the outer scanner so any already-buffered bytes aren't lost.
+	result, err := auth.PerformHandshakeWithScanner(s.main_context, conn, scanner, pg, rds)
 	if err != nil {
 		shared.DebugPrint("Handshake failed: %v", err)
 		return
@@ -188,7 +230,7 @@ func (s *TCPServer_t) handleRegisterAndSession(conn net.Conn, scanner *bufio.Sca
 		return
 	}
 
-	ip := conn.RemoteAddr().(*net.TCPAddr).IP.String()
+	ip := remoteIP(conn)
 
 	// Step 1: Collect UUID
 	uuid, ok := s.readHandshakeInput(conn, scanner, "REGISTER_CHALLENGE", "EMPTY_UUID")
@@ -347,13 +389,17 @@ func (s *TCPServer_t) enterSessionMode(conn net.Conn, scanner *bufio.Scanner, re
 		shared.DebugPrint("Robot %s reconnected, reattached to existing handler (PID %d)", result.UUID, hp.PID)
 	} else if handler_engine.HandlerManager.TryStartSpawning(result.UUID) {
 		var err error
-		hp, err = handler_engine.SpawnHandlerProcess(
-			s.main_context,
-			result.UUID, result.DeviceType, result.IP, result.SessionID,
-			pg, rds, s.bus,
-			robotSend,
-		)
-		handler_engine.HandlerManager.FinishSpawning(result.UUID)
+		func() {
+			// Release spawning flag even if SpawnHandlerProcess panics, so
+			// other connections for the same UUID aren't permanently wedged.
+			defer handler_engine.HandlerManager.FinishSpawning(result.UUID)
+			hp, err = handler_engine.SpawnHandlerProcess(
+				s.main_context,
+				result.UUID, result.DeviceType, result.IP, result.SessionID,
+				pg, rds, s.bus,
+				robotSend,
+			)
+		}()
 		if err != nil {
 			shared.DebugPrint("Failed to spawn handler for %s: %v", result.UUID, err)
 			conn.Write([]byte("ERROR HANDLER_SPAWN_FAILED\n"))
@@ -362,10 +408,28 @@ func (s *TCPServer_t) enterSessionMode(conn net.Conn, scanner *bufio.Scanner, re
 		}
 		shared.DebugPrint("Handler spawned (PID %d) for robot %s, entering session mode", hp.PID, result.UUID)
 	} else {
-		// Another connection is currently spawning this handler — wait briefly then reattach
+		// Another connection is currently spawning this handler — poll until
+		// it appears or we hit the handshake timeout. Respects context
+		// cancellation so shutdown isn't blocked on a stuck spawn.
 		shared.DebugPrint("Handler for %s is being spawned by another connection, waiting...", result.UUID)
-		time.Sleep(2 * time.Second)
-		if existing, ok := handler_engine.HandlerManager.Get(result.UUID); ok {
+		waitDeadline := time.Now().Add(shared.AppConfig.Timeouts.HandshakeTimeout())
+		ticker := time.NewTicker(50 * time.Millisecond)
+		defer ticker.Stop()
+		var existing *handler_engine.HandlerProcess
+		var found bool
+		for time.Now().Before(waitDeadline) {
+			if e, ok := handler_engine.HandlerManager.Get(result.UUID); ok {
+				existing, found = e, true
+				break
+			}
+			select {
+			case <-s.main_context.Done():
+				conn.Write([]byte("ERROR SERVER_SHUTTING_DOWN\n"))
+				return
+			case <-ticker.C:
+			}
+		}
+		if found {
 			existing.Reattach(robotSend, result.IP, result.SessionID)
 			hp = existing
 		} else {
@@ -441,7 +505,7 @@ func (s *TCPServer_t) handleHeartbeat(conn net.Conn, message string) {
 
 	payloadJSON := rest[:lastSpace]
 	signature := rest[lastSpace+1:]
-	ip := conn.RemoteAddr().(*net.TCPAddr).IP.String()
+	ip := remoteIP(conn)
 
 	result, err := auth.ProcessHeartbeat(s.main_context, uuid, payloadJSON, signature, ip, pg, rds)
 	if err != nil {

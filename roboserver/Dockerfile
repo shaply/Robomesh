@@ -10,7 +10,7 @@ RUN go build -o roboserver
 FROM debian:bookworm-slim
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates bash && \
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates bash python3 && \
     rm -rf /var/lib/apt/lists/*
 
 # Run as non-root user to limit blast radius of container compromise
@@ -24,6 +24,6 @@ RUN mkdir -p handlers && chown robomesh:robomesh handlers
 
 USER robomesh
 
-EXPOSE 8080 5002 5001/udp 1883
+EXPOSE 8080 5002 5001/udp 1883 6000
 
 CMD ["./roboserver"]

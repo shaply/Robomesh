@@ -387,7 +387,12 @@ func (h *RedisHandler) WaitForRegistrationResponse(ctx context.Context, uuid str
 
 	ch := sub.Channel()
 	select {
-	case msg := <-ch:
+	case msg, ok := <-ch:
+		if !ok {
+			// Channel closed (e.g. Redis disconnected) — surface as error
+			// instead of silently returning "rejected".
+			return false, fmt.Errorf("registration response channel closed unexpectedly")
+		}
 		return msg.Payload == "accept", nil
 	case <-ctx.Done():
 		return false, ctx.Err()

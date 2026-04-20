@@ -8,33 +8,36 @@ A centralized ecosystem for managing autonomous robots — from physical home-as
 ┌──────────────────────────────────────────────────────────────┐
 │                         Frontend                             │
 │                  SvelteKit 5 + Tailwind CSS                  │
-│                  (SSE for real-time updates)                 │
+│                  (SSE + WebSocket for real-time updates)      │
 └────────────────────────┬─────────────────────────────────────┘
-                         │ HTTP (REST + SSE)
+                         │ HTTP (REST + SSE + WS)
 ┌────────────────────────▼──────────────────────────────────────┐
 │                      roboserver (Go)                          │
 │                                                               │
-│  ┌───────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐  │
-│  │HTTP Server│  │TCP Server│  │MQTT Stub │  │  Terminal    │  │
-│  │(Chi)      │  │          │  │          │  │  (Debug CLI) │  │
-│  └────┬──────┘  └───┬──────┘  └──────────┘  └──────────────┘  │
-│       │             │                                         │
-│       │       ┌─────▼──────────────────────┐                  │
-│       │       │  Cryptographic Handshake   │                  │
-│       │       │  (Nonce → Sign → Verify)   │                  │
-│       │       └─────┬──────────────────────┘                  │
-│       │             │                                         │
-│  ┌────▼─────────────▼──────────────────────┐                  │
-│  │           Handler Engine                │                  │
-│  │  OS Process Spawner + JSON-RPC Router   │                  │
-│  │  (stdin/stdout multiplexing)            │                  │
-│  └────┬──────────────┬─────────────────────┘                  │
-│       │              │                                        │
-│  ┌────▼─────┐   ┌────▼────┐                                   │
-│  │PostgreSQL│   │  Redis  │                                   │
-│  │(registry)│   │ (state) │                                   │
-│  └──────────┘   └─────────┘                                   │
-└────────────────────────┬──────────────────────────────────────┘
+│  ┌───────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐        │
+│  │HTTP Server│ │TCP Server│ │UDP Server│ │MQTT Broker│        │
+│  │(Chi)      │ │          │ │(JSON)    │ │(Mochi)    │        │
+│  └────┬──────┘ └───┬──────┘ └───┬──────┘ └───┬──────┘        │
+│       │            │            │             │         ┌────────────┐
+│       │            │            │             │         │  Terminal   │
+│       │            └──────┬─────┘             │         │ (Debug CLI)│
+│       │                   │                   │         └────────────┘
+│       │       ┌───────────▼───────────────────▼──┐                │
+│       │       │  Cryptographic Handshake         │                │
+│       │       │  (Nonce → Sign → Verify → JWT)   │                │
+│       │       └───────────┬──────────────────────┘                │
+│       │                   │                                       │
+│  ┌────▼───────────────────▼──────────────────────┐                │
+│  │           Handler Engine                      │                │
+│  │  OS Process Spawner + JSON-RPC Router         │                │
+│  │  (stdin/stdout multiplexing)                  │                │
+│  └────┬──────────────┬───────────────────────────┘                │
+│       │              │                                            │
+│  ┌────▼─────┐   ┌────▼────┐                                      │
+│  │PostgreSQL│   │  Redis  │                                      │
+│  │(registry)│   │ (state) │                                      │
+│  └──────────┘   └─────────┘                                      │
+└────────────────────────┬──────────────────────────────────────────┘
                          │
               ┌──────────▼───────────┐
               │   Handler Scripts    │
@@ -59,12 +62,14 @@ For protocol details and API reference, see [docs/PROTOCOL.md](docs/PROTOCOL.md)
 
 ```text
 Robomesh/
+├── defaults.env                # Single source of truth for default ports/settings
 ├── docker-compose.yml          # Production: distributed deployment
 ├── docker-compose.dev.yml      # Local dev: all-in-one (Postgres + Redis + Backend)
-├── .env.example                # Template for secrets
+├── .env.example                # Template for secrets and overrides
 │
 ├── handlers/                   # Handler scripts (mounted into container)
-│   └── example_robot.sh        # Example: echo handler
+│   ├── _template/              # Boilerplate for new robot types
+│   └── test_robot/             # Example: echo handler
 │
 ├── db/                         # Database management
 │   ├── init.sql                # Schema (Docker entrypoint)
@@ -75,6 +80,9 @@ Robomesh/
 ├── scripts/                    # Development utilities
 │   └── test_e2e.py             # E2E test suite (Python)
 │
+├── tests/                      # Integration testing
+│   └── integration/            # Deployment readiness test suite
+│
 ├── roboserver/                 # Go backend
 │   ├── main.go                 # Entry point
 │   ├── config.yaml             # Structural configuration
@@ -83,9 +91,10 @@ Robomesh/
 │   ├── comms/                  # Communication abstraction (Bus interface)
 │   ├── handler_engine/         # Zero-idle process spawner + JSON-RPC router
 │   ├── database/               # PostgreSQL + Redis integration
-│   ├── http_server/            # REST API (Chi router)
+│   ├── http_server/            # REST API + SSE + WebSocket (Chi router)
 │   ├── tcp_server/             # Robot TCP protocol (AUTH, REGISTER, PERSIST)
-│   ├── mqtt_server/            # MQTT (stub)
+│   ├── udp_server/             # Robot UDP protocol (JSON packet-based)
+│   ├── mqtt_server/            # MQTT broker (Mochi-MQTT embedded)
 │   ├── terminal/               # Debug CLI
 │   └── shared/                 # Core types, config, event bus
 │
@@ -96,24 +105,43 @@ Robomesh/
 │   │   └── lib/                # Components, stores, robot registry
 │   └── package.json
 │
-└── robots/                     # Arduino/embedded robot firmware
+├── robot_sdk/                  # Robot client SDKs
+│   ├── python/                 # Python SDK (TCP, UDP, MQTT)
+│   └── c/                      # C SDK (TCP, UDP, MQTT)
+│
+└── docs/                       # Protocol and API documentation
+    ├── PROTOCOL.md             # Index of all protocol docs
+    ├── TCP.md                  # TCP protocol
+    ├── UDP.md                  # UDP protocol
+    ├── MQTT.md                 # MQTT protocol
+    ├── HEARTBEAT.md            # Heartbeat protocol (all transports)
+    ├── HANDLER.md              # Handler script JSON-RPC protocol
+    ├── HTTP_API.md             # REST API reference
+    ├── COMM_BUS.md             # Communication bus abstraction
+    ├── TERMINAL.md             # Debug terminal commands
+    └── CONFIGURATION.md        # Configuration reference
 ```
 
 ## Local Development
 
 ```bash
-# Start PostgreSQL, Redis, and the Go backend
+# Start PostgreSQL, Redis, Backend, and Frontend
 docker compose -f docker-compose.dev.yml up --build
 
 # Services exposed:
 #   HTTP API:   http://localhost:8080
-#   TCP Server: localhost:5001
-#   Terminal:   localhost:6001
+#   TCP Server: localhost:5002
+#   UDP Server: localhost:5001
+#   MQTT Broker:localhost:1883
+#   Terminal:   localhost:6000
+#   Frontend:   http://localhost:3000
 #   PostgreSQL: localhost:5433
 #   Redis:      localhost:6380
 ```
 
 The dev compose file auto-initializes the database schema (`db/init.sql`) and seeds test data (`db/seed.sql`).
+
+All default ports are defined in `defaults.env`. To override any port, set the corresponding variable in your `.env` file.
 
 ### Running Without Docker
 
@@ -133,12 +161,23 @@ npm run dev
 ## Tests
 
 ```bash
-# Unit tests
+# Unit tests (Go backend)
 cd roboserver && go test ./...
+
+# Unit tests (Python SDK)
+cd robot_sdk/python && pip install -e . && pytest tests/test_udp_unit.py tests/test_mqtt_unit.py -v
 
 # E2E tests (requires running server)
 pip install cryptography
 python3 scripts/test_e2e.py
+
+# Integration tests — deployment readiness (requires running server)
+cd tests/integration
+pip install -r requirements.txt
+pytest -v
+
+# SDK integration tests (requires running server)
+cd robot_sdk/python && pip install -e . && pytest tests/test_integration.py -v
 ```
 
 ## Production Build
@@ -157,7 +196,8 @@ docker compose up -d
 
 ```bash
 cp .env.example .env
-# Set POSTGRES_HOST, POSTGRES_PASSWORD, REDIS_PASSWORD, JWT_SECRET
+# Set POSTGRES_PASSWORD, REDIS_PASSWORD, JWT_SECRET
+# Set POSTGRES_HOST to Machine A's LAN IP
 docker compose up -d
 docker compose exec backend dbmate up  # Run migrations
 ```
@@ -166,10 +206,16 @@ docker compose exec backend dbmate up  # Run migrations
 
 Configuration priority: **defaults < config.yaml < environment variables**.
 
+Default ports and settings are centralized in `defaults.env`. Docker Compose loads this automatically. For non-Docker usage, `config.yaml` provides the same defaults.
+
 | Variable | Description | Default |
 | --- | --- | --- |
 | `HTTP_PORT` | HTTP API port | 8080 |
 | `TCP_PORT` | Robot TCP port | 5002 |
+| `UDP_PORT` | Robot UDP port | 5001 |
+| `MQTT_PORT` | MQTT broker port | 1883 |
+| `TERMINAL_PORT` | Debug terminal port | 6000 |
+| `FRONTEND_PORT` | Frontend port | 3000 |
 | `POSTGRES_HOST` | PostgreSQL host | localhost |
 | `POSTGRES_PASSWORD` | PostgreSQL password | *(required)* |
 | `REDIS_HOST` | Redis host | localhost |
@@ -177,4 +223,4 @@ Configuration priority: **defaults < config.yaml < environment variables**.
 | `JWT_SECRET` | JWT signing secret | *(required)* |
 | `DEBUG` | Enable debug logging | false |
 
-See `roboserver/config.yaml` for the full configuration reference.
+See `roboserver/config.yaml` for the full structural configuration reference, or [docs/CONFIGURATION.md](docs/CONFIGURATION.md) for detailed documentation.

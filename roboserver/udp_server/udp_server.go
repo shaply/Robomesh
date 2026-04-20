@@ -111,6 +111,11 @@ func Start(ctx context.Context, bus comms.Bus, db database.DBManager) error {
 
 // handlePacket parses and routes a single UDP packet.
 func (s *UDPServer_t) handlePacket(data []byte, addr *net.UDPAddr) {
+	defer func() {
+		if r := recover(); r != nil {
+			shared.DebugPrint("UDP packet handler panic from %s: %v", addr, r)
+		}
+	}()
 	var pkt UDPPacket
 	if err := json.Unmarshal(data, &pkt); err != nil {
 		s.sendResponse(addr, &UDPResponse{Type: "error", Status: "error", Error: "invalid JSON"})
@@ -227,17 +232,42 @@ func (s *UDPServer_t) handleAuth(addr *net.UDPAddr, pkt *UDPPacket) {
 		existing.Reattach(robotSend, ip, sessionID)
 		shared.DebugPrint("UDP: Robot %s reattached to existing handler (PID %d)", uuid, existing.PID)
 	} else if handler_engine.HandlerManager.TryStartSpawning(uuid) {
-		_, spawnErr := handler_engine.SpawnHandlerProcess(
-			s.ctx,
-			uuid, deviceType, ip, sessionID,
-			pg, rds, s.bus,
-			robotSend,
-		)
-		handler_engine.HandlerManager.FinishSpawning(uuid)
+		var spawnErr error
+		func() {
+			defer handler_engine.HandlerManager.FinishSpawning(uuid)
+			_, spawnErr = handler_engine.SpawnHandlerProcess(
+				s.ctx,
+				uuid, deviceType, ip, sessionID,
+				pg, rds, s.bus,
+				robotSend,
+			)
+		}()
 		if spawnErr != nil {
 			shared.DebugPrint("UDP: Failed to spawn handler for %s: %v", uuid, spawnErr)
+			rds.RemoveActiveRobot(s.ctx, uuid)
+			s.sendResponse(addr, &UDPResponse{Type: "auth_response", Status: "error", Error: "handler spawn failed"})
+			return
 		}
+	} else {
+		// Another request is mid-spawn — wait briefly for it to appear.
+		waitDeadline := time.Now().Add(shared.AppConfig.Timeouts.HandshakeTimeout())
+		for time.Now().Before(waitDeadline) {
+			if existing, ok := handler_engine.HandlerManager.Get(uuid); ok {
+				existing.Reattach(robotSend, ip, sessionID)
+				goto handlerReady
+			}
+			select {
+			case <-s.ctx.Done():
+				return
+			case <-time.After(50 * time.Millisecond):
+			}
+		}
+		shared.DebugPrint("UDP: Handler for %s not available after wait", uuid)
+		rds.RemoveActiveRobot(s.ctx, uuid)
+		s.sendResponse(addr, &UDPResponse{Type: "auth_response", Status: "error", Error: "handler unavailable"})
+		return
 	}
+handlerReady:
 
 	shared.DebugPrint("UDP: Robot %s authenticated from %s", uuid, shared.RedactIP(ip))
 	s.sendResponse(addr, &UDPResponse{Type: "auth_response", Status: "ok", JWT: jwt})

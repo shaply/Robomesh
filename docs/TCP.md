@@ -1,6 +1,6 @@
 # TCP Protocol
 
-Robots connect via TCP (default port 5002) and send either `AUTH` (pre-registered) or `REGISTER` (new robot). Both flows end in an authenticated session where the handler script is spawned.
+Robots connect via TCP (default port 5002, env var `TCP_PORT`) and send either `AUTH` (pre-registered) or `REGISTER` (new robot). Both flows end in an authenticated session where the handler script is spawned.
 
 Line-based protocol with a maximum message size of 64KB.
 

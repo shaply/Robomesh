@@ -18,6 +18,6 @@ Unfinished features, TODOs, and implementation gaps in the Robomesh codebase.
 
 ## Low Priority
 
-### TASK-022: Integration testing with robot
-**Files:** TBD
-**Description:** There should be an integration testing framework that utilizes test robot and connects it and ensures that all flows (including failures) are properly managed. This is like a last minute test suite before deployment.
+### ~~TASK-022: Integration testing with robot~~
+**Files:** `tests/integration/`
+**Status:** Complete — Comprehensive pytest-based integration testing framework. Tests all protocols (TCP, UDP, MQTT, HTTP), auth flows (success/failure), heartbeat (including replay rejection), handler lifecycle (start/kill/restart), provisioning, cross-protocol interactions, and server health checks. Run with `./tests/integration/run.sh` or `cd tests/integration && pytest -v`.

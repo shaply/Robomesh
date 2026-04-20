@@ -1,6 +1,6 @@
 # Terminal Commands
 
-The debug terminal server (default port 6000) accepts TCP connections with a line-based CLI. Useful for debugging and manual robot management without the web frontend.
+The debug terminal server (default port 6000, env var `TERMINAL_PORT`) accepts TCP connections with a line-based CLI. Useful for debugging and manual robot management without the web frontend.
 
 **Security:** The terminal binds to `127.0.0.1` only (localhost). It provides full admin access (shutdown, accept/reject registrations, list robots) with no authentication, so it must not be exposed to the network.
 

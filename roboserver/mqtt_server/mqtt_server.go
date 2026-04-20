@@ -163,6 +163,19 @@ type HeartbeatRequest struct {
 	Signature string `json:"signature"`
 }
 
+// safeGo runs fn in a goroutine and recovers from any panic so a single
+// malformed MQTT payload can't crash the broker.
+func safeGo(label string, fn func()) {
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				shared.DebugPrint("MQTT %s panic: %v", label, r)
+			}
+		}()
+		fn()
+	}()
+}
+
 func (h *protocolHook) OnPublished(cl *mqtt.Client, pk packets.Packet) {
 	topic := pk.TopicName
 	payload := pk.Payload
@@ -172,19 +185,19 @@ func (h *protocolHook) OnPublished(cl *mqtt.Client, pk packets.Packet) {
 		uuid := strings.TrimPrefix(topic, "robomesh/auth/")
 		uuid = strings.TrimSuffix(uuid, "/request")
 		if uuid != "" && !strings.Contains(uuid, "/") {
-			go h.handleAuth(cl, uuid, payload)
+			safeGo("auth", func() { h.handleAuth(cl, uuid, payload) })
 		}
 
 	case strings.HasPrefix(topic, "robomesh/heartbeat/"):
 		uuid := strings.TrimPrefix(topic, "robomesh/heartbeat/")
 		if uuid != "" && !strings.Contains(uuid, "/") {
-			go h.handleHeartbeat(uuid, payload, cl)
+			safeGo("heartbeat", func() { h.handleHeartbeat(uuid, payload, cl) })
 		}
 
 	case strings.HasPrefix(topic, "robomesh/message/"):
 		uuid := strings.TrimPrefix(topic, "robomesh/message/")
 		if uuid != "" && !strings.Contains(uuid, "/") {
-			go h.handleMessage(uuid, payload)
+			safeGo("message", func() { h.handleMessage(uuid, payload) })
 		}
 	}
 }

@@ -71,10 +71,12 @@ func (b *LocalBus) PublishToGroup(group string, eventType string, data any) erro
 	cg, ok := b.groups[key]
 	b.groupsMu.RUnlock()
 
-	if !ok || len(cg.handlers) == 0 {
-		return nil // no subscribers
+	if !ok {
+		return nil // no group registered
 	}
 
+	// len(cg.handlers) must be read under the group lock — concurrent
+	// SubscribeAsGroup / cancel can mutate the slice.
 	cg.mu.Lock()
 	n := len(cg.handlers)
 	if n == 0 {

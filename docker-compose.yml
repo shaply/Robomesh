@@ -2,11 +2,22 @@ services:
   backend:
     build: ./roboserver
     ports:
-      - "${HTTP_PORT:-8080}:8080"
-      - "${TCP_PORT:-5002}:5002"
-      - "${MQTT_PORT:-1883}:1883"
+      - "${HTTP_PORT:-8080}:${HTTP_PORT:-8080}"
+      - "${TCP_PORT:-5002}:${TCP_PORT:-5002}"
+      - "${UDP_PORT:-5001}:${UDP_PORT:-5001}/udp"
+      - "${MQTT_PORT:-1883}:${MQTT_PORT:-1883}"
+    env_file:
+      - path: defaults.env
+        required: true
+      - path: .env
+        required: false
     environment:
       - DEBUG=${DEBUG:-false}
+      - HTTP_PORT=${HTTP_PORT:-8080}
+      - TCP_PORT=${TCP_PORT:-5002}
+      - UDP_PORT=${UDP_PORT:-5001}
+      - MQTT_PORT=${MQTT_PORT:-1883}
+      - TERMINAL_PORT=${TERMINAL_PORT:-6000}
       - POSTGRES_HOST=${POSTGRES_HOST:-localhost}
       - POSTGRES_PORT=${POSTGRES_PORT:-5432}
       - POSTGRES_USER=${POSTGRES_USER:-robomesh}
@@ -32,7 +43,7 @@ services:
       - "${FRONTEND_PORT:-3000}:3000"
     environment:
       - PUBLIC_BACKEND_IP=backend
-      - PUBLIC_BACKEND_PORT=8080
+      - PUBLIC_BACKEND_PORT=${HTTP_PORT:-8080}
     depends_on:
       - backend
     networks:
